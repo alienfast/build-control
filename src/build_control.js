@@ -68,7 +68,7 @@ const BuildControl = class extends Base {
       })
     }
 
-    this.git = new Git({debug: true})
+    this.git = new Git({debug: false})
     this.package = this.readPackage()
   }
 

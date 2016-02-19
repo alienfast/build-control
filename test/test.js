@@ -75,10 +75,16 @@ let execScenario = (cb) => {
         }
 
         let configurations = readConfig(files[0])
-        for(let config of configurations) {
-          let buildControl = new BuildControl(config)
+
+        //capture the logs and verify the output
+        let logs = ``
+        for (let config of configurations) {
+          let buildControl = new LogCaptureBuildControl(config)
           buildControl.run()
+          logs += buildControl.logs.join('\n')
         }
+
+        return { error: null, stdout: logs, stderror: null }
       }
       finally {
         shelljs.cd(originalPwd)
@@ -93,6 +99,28 @@ let execScenario = (cb) => {
     .then((processOutput) => {
       return cb(processOutput.error, processOutput.stdout, processOutput.stderr)
     })
+}
+
+const LogCaptureBuildControl = class extends BuildControl {
+
+  constructor(config = {}) {
+    super(config)
+    this.logs = []
+
+    // hack to get the git messages as well
+    this.originalGitLog = this.git.log
+    this.git.log = ((msg) => {
+
+      //fancyLog(`******************Git log messages!`)
+      this.logs.push(this.maskSensitive(msg))
+      this.originalGitLog(msg)
+    })
+  }
+
+  log(msg) {
+    this.logs.push(this.maskSensitive(msg))
+    super.log(msg)
+  }
 }
 
 
@@ -182,11 +210,17 @@ describe('buildcontrol', function () {
         // verify output from grunt
         .then(() => {
           return execScenario(function (err, stdout, stderr) {
+
+            //fancyLog(`*******************************Callback`)
+            //fancyLog(`err: ${err}`)
+            //fancyLog(`stderr: ${stderr}`)
+            //fancyLog(`stdout: \n\n\n\n\n${stdout}\n\n\n\n`)
             expect(err).to.equal(null)
             expect(stdout).to.contain('Initialized empty Git repository')
             expect(stdout).to.contain('Committing changes to "master".')
-            expect(stdout).to.match(/Built repo from commit \w+ on branch master/g)
+            expect(stdout).to.match(/Built basic-deployment v0\.0\.1 from commit \w+ on branch master/g) // FIXME commit null?
             expect(stdout).to.contain('Pushing master to ../../remote')
+            //fancyLog(`*******************************`)
           })
         })
 
