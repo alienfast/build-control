@@ -62,7 +62,8 @@ const Git = class extends Base {
   /**
    * Fetch remote refs to a specific branch, equivalent to a pull without checkout
    */
-  fetch(remoteName, branch, depth) {
+  fetch(remoteName, branch, shallow = false) {
+    let depth = shallow ? '--depth=1 ' : ''
     // `--update-head-ok` allows fetch on a branch with uncommited changes
     this.execWrap(`git fetch --progress --verbose --update-head-ok ${depth}${remoteName} ${branch}`, false, true)
   }

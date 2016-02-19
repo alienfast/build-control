@@ -1,6 +1,5 @@
 import gulp from 'gulp'
-import {Preset, Clean, RollupEs, RollupCjs, EsLint, TaskSeries} from 'gulp-pipeline'
-
+import {Preset, Clean, Mocha, RollupEs, RollupCjs, EsLint, TaskSeries} from 'gulp-pipeline/src/index'
 
 let preset = Preset.nodeSrc()
 
@@ -8,6 +7,7 @@ let preset = Preset.nodeSrc()
 let recipes = [
   new Clean(gulp, preset),
   new EsLint(gulp, preset),
+  new Mocha(gulp, preset, {debug:true}),
   [
     new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}),
     new RollupCjs(gulp, preset,{options: {dest: 'build-control.cjs.js'}})

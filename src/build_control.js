@@ -9,6 +9,7 @@ import semver from 'semver'
 import shelljs from 'shelljs'
 
 const Default = {
+  force: false,
   branch: 'dist',
   dir: 'dist',
   remote: '../',
@@ -18,10 +19,13 @@ const Default = {
   commit: false,
   tag: false,
   push: false,
-  force: false,
-  message: `Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%`,
+  commit: {
+    message: `Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%`
+  },
   connectCommits: true,
-  shallowFetch: false,
+  fetch: {
+    shallow: false
+  },
   config: {}
 }
 
@@ -32,11 +36,6 @@ const BuildControl = class extends Base {
 
     this.git = new Git()
     this.originalCwd = shelljs.pwd()
-    let remoteName = null
-
-    let depth = this.config.shallowFetch ? '--depth=1 ' : ''
-    let localBranchExists
-    let remoteBranchExists
 
     // Build remote if sensitive information is passed in
     if (this.config.login && this.config.token) {
@@ -86,14 +85,14 @@ const BuildControl = class extends Base {
     if (this.config.connectCommits) {
       let diff = this.git.diff()
       if (diff !== '') {
-        throw ('There are uncommitted changes in your working directory. \n' +
-        'Please commit changes to the main project before you commit to \n' +
-        'the built code.\n')
+        throw new Error('There are uncommitted changes in your working directory. \n' +
+          'Please commit changes to the main project before you commit to \n' +
+          'the built code.\n')
       }
     }
 
-    if (this.config.shallowFetch && semver.lt(version, '1.9.0')) {
-      throw(`Option "shallowFetch" is supported on Git >= 1.9.0 and your version is ${version}.`)
+    if (this.config.fetch.shallow && semver.lt(version, '1.9.0')) {
+      throw new Error(`Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ${version}.`)
     }
   }
 
@@ -170,8 +169,8 @@ const BuildControl = class extends Base {
    */
   fetch(dest) {
     let branch = (this.config.remoteBranch || this.config.branch) + (dest ? ':' + this.config.branch : '');
-    this.log(`Fetching "${this.config.branch}" ${(this.config.shallowFetch ? 'files' : 'history')} from ${this.config.remote}.`);
-    this.git.fetch(remoteName, branch, depth)
+    this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote}.`);
+    this.git.fetch(remoteName, branch, this.config.fetch.shallow)
   }
 
   /**
@@ -197,7 +196,7 @@ const BuildControl = class extends Base {
    * Stage and commit to a branch
    */
   commit() {
-    let message = this.config.message
+    let message = this.config.commit.message
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceCommit%/g, this.git.sourceCommit())
       .replace(/%sourceBranch%/g, this.git.sourceBranch())
@@ -260,7 +259,7 @@ const BuildControl = class extends Base {
       this.ensureGitInit()
       this.initConfig()
 
-      remoteName = this.config.remote
+      let remoteName = this.config.remote
 
       // Regex to test for remote url
       let remoteUrlRegex = new RegExp('[\/\\:]')
@@ -317,7 +316,6 @@ const BuildControl = class extends Base {
     finally {
       // Revert working directory
       shelljs.cd(this.originalCwd)
-      done(true)
     }
   }
 }
