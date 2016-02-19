@@ -22,7 +22,7 @@ const Default = {
     branch: undefined,// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
   },
   tag: {
-    name: undefined   // Will autoresolve as the package.json version if possible.  Pass false to avoid tagging.
+    name: undefined   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
   },
   push: false,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well.
   commit: {
@@ -31,9 +31,10 @@ const Default = {
     // The commit template to use when committing. (special characters must be escaped)
     //  The following tokens are replaced:
     //    - %sourceName%:   the package.json name or the project directory name
+    //    - %sourceTag%: the current tag i.e. v1.0.0
     //    - %sourceBranch%: the current branch
     //    - %sourceCommit%: the most recent commit
-    template: `Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%`
+    template: `Built %sourceName% %sourceTag% from commit %sourceCommit% on branch %sourceBranch%`
   },
   connectCommits: true,// Make sure that every commit on the built code branch matches a commit on the main project branch. If the main project's working directory has uncommitted changes, a commit task will throw an error.
   fetch: {
@@ -72,9 +73,28 @@ const BuildControl = class extends Base {
     this.package = this.readPackage()
   }
 
+  /**
+   * convenience to resolve from a fn or string
+   */
+  tagName(){
+    if(this.config.tag.name === false){
+      return false
+    }
+    else if (typeof this.config.tag.name === 'function') {
+      return this.config.tag.name()
+    }
+    else{
+      return this.config.tag.name()
+    }
+  }
+
+  /**
+   * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
+   * @returns {*}
+   */
   autoResolveTagName() {
     if(this.package && this.package.version) {
-      return this.package.version
+      return `v${this.package.version}`
     }
     else{
       return false
@@ -227,6 +247,7 @@ const BuildControl = class extends Base {
   commit() {
     let message = this.config.commit.template
       .replace(/%sourceName%/g, this.sourceName())
+      .replace(/%sourceTag%/g, this.config.tag.name())
       .replace(/%sourceCommit%/g, this.git.sourceCommit())
       .replace(/%sourceBranch%/g, this.git.sourceBranch())
 
@@ -246,12 +267,12 @@ const BuildControl = class extends Base {
    */
   tagLocalBranch() {
     // If the tag exists, skip tagging
-    if (this.git.tagExists(this.config.tag.name(), remoteName)) {
-      this.log(`The tag "${this.config.tag.name()}" already exists on remote. Skipping tagging.`)
+    if (this.git.tagExists(this.tagName(), remoteName)) {
+      this.log(`The tag "${this.tagName()}" already exists on remote. Skipping tagging.`)
       return
     }
 
-    this.log(`Tagging the local repository with ${this.config.tag.name()}`)
+    this.log(`Tagging the local repository with ${this.tagName()}`)
     this.git.tag(this.config.tag.name())
   }
 

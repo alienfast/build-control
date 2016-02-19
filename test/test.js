@@ -1,13 +1,16 @@
+import BuildControl from '../src/build_control'
 import chai from 'chai'
-let expect = chai.expect
-let should = chai.should()
-
+import glob from 'glob'
 import path from 'path'
 import fs from 'fs-extra'
 import async from 'async'
 import childProcess from 'child_process'
+import shelljs from 'shelljs'
 //import _ from 'lodash'
 import Promise from 'bluebird'
+
+let expect = chai.expect
+let should = chai.should()
 
 
 /**
@@ -55,7 +58,30 @@ let execScenario = (cb) => {
 
     // execute the grunt default command
     .then(() => {
-      return childProcessExec(GRUNT_EXEC + ' --no-color', {cwd: distDir})
+
+      let originalPwd = shelljs.pwd()
+      try {
+        // Change working directory
+        shelljs.cd(distDir)
+
+        // configurations.json should be an array of configurations
+
+        // for each configuration, run an instance of BuildControl
+        let configurationsPath = `${distDir}/*.json`
+        let configurations = glob.sync(configurationsPath, {realpath: true})
+        if (!configurations || configurations.length <= 0) {
+          throw new Error(`Unable to find any configurations at ${configurationsPath}`)
+        }
+
+        let config = readConfig(configurations[0])
+        let buildControl = new BuildControl(config)
+        buildControl.run()
+
+        //return childProcessExec(GRUNT_EXEC + ' --no-color', {cwd: distDir})
+      }
+      finally {
+        shelljs.cd(originalPwd)
+      }
     })
 
     // clone the "remote" into "verify/"
@@ -66,6 +92,16 @@ let execScenario = (cb) => {
     .then((gruntOutput) => {
       return cb(gruntOutput.error, gruntOutput.stdout, gruntOutput.stderr)
     })
+}
+
+
+let readConfig = (path) => {
+  if (shelljs.test('-f', path, {silent: true})) {
+    return JSON.parse(fs.readFileSync(path, 'utf8'))
+  }
+  else {
+    throw new Error(`Unable to read configuration file ${path}`)
+  }
 }
 
 
@@ -91,11 +127,11 @@ let childProcessExec = (command, options) => {
  * Assumptions:
  *    - each tests' current working directory has been set to `test/mock`
  */
-describe('buildcontrol',  function() {
+describe('buildcontrol', function () {
   this.timeout(20000)
 
 
-  beforeEach(function(done) {
+  beforeEach(function (done) {
     // the describe is the mock folder's name.
     let scenarioPath = this.currentTest.parent.title
 
@@ -126,7 +162,7 @@ describe('buildcontrol',  function() {
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
 
-  describe('basic deployment',  function() {
+  describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
 

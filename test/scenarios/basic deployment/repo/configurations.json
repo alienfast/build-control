@@ -1,0 +1,8 @@
+[
+  {
+    "remote": "../../remote",
+    "branch": "master",
+    "commit": "This is a commit",
+    "push": true
+  }
+]
