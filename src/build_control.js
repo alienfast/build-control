@@ -23,9 +23,9 @@ const Default = {
   tag: {
     name: undefined   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
   },
-  push: false,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well.
+  push: true,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
   commit: {
-    auto: false,      // Commits built code to `branch`. A new commit is only created if the built code has changed.
+    auto: true,      // Commits built code to `branch`. A new commit is only created if the built code has changed. false will disable
 
     // The commit template to use when committing. (special characters must be escaped)
     //  The following tokens are replaced:
@@ -68,7 +68,7 @@ const BuildControl = class extends Base {
       })
     }
 
-    this.git = new Git()
+    this.git = new Git({debug: true})
     this.package = this.readPackage()
   }
 
@@ -183,7 +183,7 @@ const BuildControl = class extends Base {
     if (remoteUrlRegex.test(this.config.remote.repo)) {
       let remoteName = this.git.hash('remote', this.config.remote.repo)
       if (!this.git.remote().includes(remoteName)) {
-        this.log('Creating remote.')
+        this.log(`Creating remote ${remoteName}`)
         this.git.remoteAdd(remoteName, this.config.remote.repo)
       }
     }
@@ -243,7 +243,7 @@ const BuildControl = class extends Base {
       return this.package.name
     }
     else {
-      return shelljs.cwd().split('/').pop()
+      return shelljs.pwd().split('/').pop()
     }
   }
 
@@ -303,6 +303,8 @@ const BuildControl = class extends Base {
   run() {
     // Run task
     try {
+
+       this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.dir}...`)
 
       // Prepare
       this.checkRequirements()

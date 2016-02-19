@@ -1,8 +1,8 @@
 import extend from 'extend'
 import stringify from 'stringify-object'
-import console from 'console'
 import shelljs from 'shelljs'
 import chalk from 'chalk'
+import fancyLog from 'fancy-log'
 
 export const Default = {}
 
@@ -35,6 +35,8 @@ const Base = class {
       stream = false
     }
 
+    this.debug(command)
+
     let shellResult = shelljs.exec(command, {silent: (!stream)})
     if (shellResult.code === 0) {
       if (verbose) {
@@ -47,7 +49,7 @@ const Base = class {
   }
 
   log(msg) {
-    console.log(this.maskSensitive(msg)) // eslint-disable-line no-console
+    fancyLog(this.maskSensitive(msg))
   }
 
   maskSensitive(str) {

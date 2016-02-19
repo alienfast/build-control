@@ -8,6 +8,7 @@ import childProcess from 'child_process'
 import shelljs from 'shelljs'
 //import _ from 'lodash'
 import Promise from 'bluebird'
+import fancyLog from 'fancy-log'
 
 let expect = chai.expect
 let should = chai.should()
@@ -78,8 +79,6 @@ let execScenario = (cb) => {
           let buildControl = new BuildControl(config)
           buildControl.run()
         }
-
-        //return childProcessExec(GRUNT_EXEC + ' --no-color', {cwd: distDir})
       }
       finally {
         shelljs.cd(originalPwd)
@@ -91,8 +90,8 @@ let execScenario = (cb) => {
       fs.removeSync(verifyDir) // since we're cloning from `remote/` we'll just remove the folder if it exists
       return childProcessExec('git clone remote validate', {cwd: mockRepoDir})
     })
-    .then((gruntOutput) => {
-      return cb(gruntOutput.error, gruntOutput.stdout, gruntOutput.stderr)
+    .then((processOutput) => {
+      return cb(processOutput.error, processOutput.stdout, processOutput.stderr)
     })
 }
 
@@ -109,6 +108,7 @@ let readConfig = (path) => {
 
 let childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
+    fancyLog(`test: ${command}`)
     childProcess.exec(command, options, function (err, stdout, stderr) {
       return resolve({
         error: err,
@@ -138,7 +138,7 @@ describe('buildcontrol', function () {
     let scenarioPath = this.currentTest.parent.title
 
     // ensure that we reset to `test/` dir
-    process.chdir(__dirname)
+    shelljs.cd(__dirname)
 
     // clean testing folder `test/mock`
     fs.removeSync('mock')
@@ -150,12 +150,12 @@ describe('buildcontrol', function () {
 
       // ensure all tests are are assuming the current working directory is: `test/mock`
       process.chdir('mock')
-
       done()
     }
     catch (err) {
-      if (err && err.code === 'ENOENT')
-        throw new Error('could not find scenario "' + scenarioPath + '" in test/scenarios/')
+      if (err && err.code === 'ENOENT') {
+        throw new Error(`Could not find scenario ${scenarioPath} in test/scenarios/`)
+      }
 
       throw new Error(err)
     }
