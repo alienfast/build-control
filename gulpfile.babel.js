@@ -7,10 +7,10 @@ let preset = Preset.nodeSrc()
 let recipes = [
   new Clean(gulp, preset),
   new EsLint(gulp, preset),
-  new Mocha(gulp, preset, {debug:true}),
+  new Mocha(gulp, preset, {debug: false}),
   [
     new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}),
-    new RollupCjs(gulp, preset,{options: {dest: 'build-control.cjs.js'}})
+    new RollupCjs(gulp, preset, {options: {dest: 'build-control.cjs.js'}})
   ]
 ]
 

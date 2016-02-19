@@ -91,11 +91,11 @@ let childProcessExec = (command, options) => {
  * Assumptions:
  *    - each tests' current working directory has been set to `test/mock`
  */
-describe('buildcontrol', () => {
+describe('buildcontrol',  function() {
   this.timeout(20000)
 
 
-  beforeEach((done) => {
+  beforeEach(function(done) {
     // the describe is the mock folder's name.
     let scenarioPath = this.currentTest.parent.title
 
@@ -124,7 +124,9 @@ describe('buildcontrol', () => {
   })
 
 
-  describe('basic deployment', () => {
+  // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
+
+  describe('basic deployment',  function() {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
 
@@ -169,7 +171,7 @@ describe('buildcontrol', () => {
     })
   })
 
-  //describe('feature branch deployment', () => {
+  //describe('feature branch deployment',  function() {
   //  it('should contain the correct sourceBranch name', (done) => {
   //    let tasks = []
   //
@@ -216,7 +218,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('merge multiple repos', () => {
+  //describe('merge multiple repos',  function() {
   //  this.timeout(30000)
   //
   //  it('merge multiple repos', (done) => {
@@ -231,7 +233,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('simple deploy', () => {
+  //describe('simple deploy',  function() {
   //  it('should deploy multiple times with the correct commit message', (done) => {
   //    let tasks = []
   //
@@ -275,7 +277,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('secure endpoint', () => {
+  //describe('secure endpoint',  function() {
   //  it('should not log out secure information', (done) => {
   //    let tasks = []
   //
@@ -315,7 +317,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('untracked branch in src repo', () => {
+  //describe('untracked branch in src repo',  function() {
   //  it('should track a branch in ../ if it was untracked', (done) => {
   //    let tasks = []
   //
@@ -393,7 +395,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('remote urls', () => {
+  //describe('remote urls',  function() {
   //  function generateRemote(url, cb) {
   //    let tasks = []
   //
@@ -481,7 +483,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('push diff branches', () => {
+  //describe('push diff branches',  function() {
   //  it('should push local:stage to stage:master and local:prod to prod:master', (done) => {
   //    let tasks = []
   //
@@ -568,7 +570,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('git config', () => {
+  //describe('git config',  function() {
   //  it('should set git config variables properly', (done) => {
   //    let tasks = []
   //
@@ -609,7 +611,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('deploy to named remote', () => {
+  //describe('deploy to named remote',  function() {
   //  it('should have deployed to origin', (done) => {
   //    let tasks = []
   //
@@ -637,8 +639,8 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('force push', () => {
-  //  beforeEach((done) => {
+  //describe('force push',  function() {
+  //  beforeEach(function(done) => {
   //    let tasks = []
   //
   //    // initialize dist to be a repo and make a commit
@@ -692,7 +694,7 @@ describe('buildcontrol', () => {
   //})
   //
   //
-  //describe('connect commits', () => {
+  //describe('connect commits',  function() {
   //  it('should not be able to deploy if there is uncommitted files', () => {
   //    return Promise.resolve()
   //
