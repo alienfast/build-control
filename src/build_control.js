@@ -9,47 +9,76 @@ import semver from 'semver'
 import shelljs from 'shelljs'
 
 const Default = {
-  force: false,
-  branch: 'dist',
-  dir: 'dist',
-  remote: '../',
-  remoteBranch: '',
-  login: '',
-  token: '',
-  commit: false,
-  tag: false,
-  push: false,
+  branch: 'dist',     // The branch to commit to.
+  dir: 'dist',        // The directory that contains your built code.
+  remote: {
+    repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
+                      //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
+                      //   - `../` - the local project repository itself
+
+    // If token && login are provided, the remote.repo will be formatted to include these
+    login: undefined,
+    token: undefined,
+    branch: undefined,// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
+  },
+  tag: {
+    name: undefined   // Will autoresolve as the package.json version if possible.  Pass false to avoid tagging.
+  },
+  push: false,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well.
   commit: {
-    message: `Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%`
+    auto: false,      // Commits built code to `branch`. A new commit is only created if the built code has changed.
+
+    // The commit template to use when committing. (special characters must be escaped)
+    //  The following tokens are replaced:
+    //    - %sourceName%:   the package.json name or the project directory name
+    //    - %sourceBranch%: the current branch
+    //    - %sourceCommit%: the most recent commit
+    template: `Built %sourceName% from commit %sourceCommit% on branch %sourceBranch%`
   },
-  connectCommits: true,
+  connectCommits: true,// Make sure that every commit on the built code branch matches a commit on the main project branch. If the main project's working directory has uncommitted changes, a commit task will throw an error.
   fetch: {
-    shallow: false
+    shallow: false    // Fetches branch from remote with the flag --depth=1. Which makes a shallow clone with a history truncated to the last revision. Might bring some boost on long-history repositories.
   },
-  config: {}
+  git: {
+    config: {},         // [git config](http://git-scm.com/docs/git-config) settings for the repository when preparing the repository. e.g. `{'user.name': 'John Doe'}`
+  },
+  force: false,     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
 const BuildControl = class extends Base {
 
   constructor(config = {}) {
-    super(extend(true, {}, Default, config))
+    super(extend(true, {},
+      Default,
+      { tag: { name: () => this.autoResolveTagName() } }, // tag package version auto resolver
+      config
+    ))
 
-    this.git = new Git()
     this.originalCwd = shelljs.pwd()
 
-    // Build remote if sensitive information is passed in
-    if (this.config.login && this.config.token) {
+    // Build remote repo if sensitive information is passed in
+    if (this.config.remote.login && this.config.remote.token) {
       let remote = url.parse(this.config.remote)
 
-      this.config.remote = url.format({
+      this.config.remote.repo = url.format({
         protocol: remote.protocol,
-        auth: this.config.login + ':' + this.config.token,
+        auth: this.config.remote.login + ':' + this.config.remote.token,
         host: remote.host,
         pathname: remote.pathname
       })
     }
 
+    this.git = new Git()
     this.package = this.readPackage()
+  }
+
+  autoResolveTagName() {
+    if(this.package && this.package.version) {
+      return this.package.version
+    }
+    else{
+      return false
+    }
   }
 
   readPackage() {
@@ -107,9 +136,9 @@ const BuildControl = class extends Base {
    * Initialize git repo if one doesn't exist
    */
   ensureGitInit() {
-    if (!fs.existsSync(path.join(this.originalCwd, this.config.dir, '.git'))) {
-      this.log('Creating git repository in "' + this.config.dir + '".')
-
+    let repo = path.join(this.originalCwd, this.config.dir, '.git')
+    if (!fs.existsSync(repo)) {
+      this.log(`Creating git repository in ${this.config.dir}.`)
       this.git.init()
     }
   }
@@ -118,8 +147,8 @@ const BuildControl = class extends Base {
    * Initialize the git config
    */
   initConfig() {
-    for (let key of Object.keys(this.config.config)) {
-      this.git.configure(key, this.config.config[key])
+    for (let key of Object.keys(this.config.git.config)) {
+      this.git.configure(key, this.config.git.config[key])
     }
   }
 
@@ -127,10 +156,10 @@ const BuildControl = class extends Base {
    * Create a named remote if one doesn't exist
    */
   ensureRemote() {
-    let remoteName = this.git.hash('remote', this.config.remote)
+    let remoteName = this.git.hash('remote', this.config.remote.repo)
     if (!this.git.remote().includes(remoteName)) {
       this.log('Creating remote.')
-      this.git.remoteAdd(remoteName, this.config.remote)
+      this.git.remoteAdd(remoteName, this.config.remote.repo)
     }
   }
 
@@ -168,8 +197,8 @@ const BuildControl = class extends Base {
    * @param dest
    */
   fetch(dest) {
-    let branch = (this.config.remoteBranch || this.config.branch) + (dest ? ':' + this.config.branch : '');
-    this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote}.`);
+    let branch = (this.config.remote.branch || this.config.branch) + (dest ? ':' + this.config.branch : '');
+    this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote.repo}.`);
     this.git.fetch(remoteName, branch, this.config.fetch.shallow)
   }
 
@@ -177,7 +206,7 @@ const BuildControl = class extends Base {
    * Set branch to track remote
    */
   ensureLocalBranchTracksRemote() {
-    let remoteBranch = this.config.remoteBranch || this.config.branch;
+    let remoteBranch = this.config.remote.branch || this.config.branch;
     if (this.git.branch(this.config.branch) !== remoteName) {
       this.git.branchRemote(this.config.branch, remoteName, remoteBranch)
     }
@@ -188,7 +217,7 @@ const BuildControl = class extends Base {
       return this.package.name
     }
     else {
-      return process.cwd().split('/').pop()
+      return shelljs.cwd().split('/').pop()
     }
   }
 
@@ -196,7 +225,7 @@ const BuildControl = class extends Base {
    * Stage and commit to a branch
    */
   commit() {
-    let message = this.config.commit.message
+    let message = this.config.commit.template
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceCommit%/g, this.git.sourceCommit())
       .replace(/%sourceBranch%/g, this.git.sourceBranch())
@@ -217,13 +246,13 @@ const BuildControl = class extends Base {
    */
   tagLocalBranch() {
     // If the tag exists, skip tagging
-    if (this.git.tagExists(this.config.tag, remoteName)) {
-      this.log(`The tag "${this.config.tag}" already exists on remote. Skipping tagging.`)
+    if (this.git.tagExists(this.config.tag.name(), remoteName)) {
+      this.log(`The tag "${this.config.tag.name()}" already exists on remote. Skipping tagging.`)
       return
     }
 
-    this.log(`Tagging the local repository with ${this.config.tag}`)
-    this.git.tag(this.config.tag)
+    this.log(`Tagging the local repository with ${this.config.tag.name()}`)
+    this.git.tag(this.config.tag.name())
   }
 
 
@@ -233,12 +262,12 @@ const BuildControl = class extends Base {
   push() {
     let branch = this.config.branch
 
-    if (this.config.remoteBranch) {
-      branch += `:${this.config.remoteBranch}`
+    if (this.config.remote.branch) {
+      branch += `:${this.config.remote.branch}`
     }
 
     this.git.push(remoteName, branch, this.config.force)
-    if (this.config.tag) {
+    if (this.config.tag.name()) {
       this.git.pushTag(remoteName, tag)
     }
   }
@@ -250,7 +279,7 @@ const BuildControl = class extends Base {
 
       // Prepare
       this.checkRequirements()
-      if (this.config.remote === '../') this.verifyRepoBranchIsTracked()
+      if (this.config.remote.repo === '../') this.verifyRepoBranchIsTracked()
 
       // Change working directory
       shelljs.cd(this.config.dir)
@@ -259,7 +288,7 @@ const BuildControl = class extends Base {
       this.ensureGitInit()
       this.initConfig()
 
-      let remoteName = this.config.remote
+      let remoteName = this.config.remote.repo
 
       // Regex to test for remote url
       let remoteUrlRegex = new RegExp('[\/\\:]')
@@ -269,7 +298,7 @@ const BuildControl = class extends Base {
 
       // Set up local branch
       let localBranchExists = this.git.branchExists(this.config.branch)
-      let remoteBranchExists = this.git.branchRemoteExists((this.config.remoteBranch || this.config.branch), remoteName)
+      let remoteBranchExists = this.git.branchRemoteExists((this.config.remote.branch || this.config.branch), remoteName)
 
       if (remoteBranchExists) {
         this.fetch()
@@ -286,7 +315,7 @@ const BuildControl = class extends Base {
       }
       else if (remoteBranchExists && !localBranchExists) { //// TEST THIS ONE
         // Create local branch that tracks remote
-        this.git.track(this.config.branch, remoteName, (this.config.remoteBranch || this.config.branch))
+        this.git.track(this.config.branch, remoteName, (this.config.remote.branch || this.config.branch))
       }
       else if (!remoteBranchExists && !localBranchExists) {
         // Create local branch
@@ -298,11 +327,11 @@ const BuildControl = class extends Base {
       this.git.symbolicRefHead(this.config.branch)
       this.git.reset()
 
-      if (this.config.commit) {
+      if (this.config.commit.auto) {
         this.commit()
       }
 
-      if (this.config.tag) {
+      if (this.config.tag.name()) {
         this.tagLocalBranch()
       }
 
