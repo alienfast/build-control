@@ -1,10 +1,8 @@
 import extend from 'extend'
-import Util from 'gulp-util'
-import notify from 'gulp-notify'
 import stringify from 'stringify-object'
-import gulpHelp from 'gulp-help'
 import console from 'console'
 import shelljs from 'shelljs'
+import chalk from 'chalk'
 
 export const Default = {}
 
@@ -49,7 +47,7 @@ const Base = class {
   }
 
   log(msg) {
-    Util.log(this.maskSensitive(msg))
+    console.log(this.maskSensitive(msg)) // eslint-disable-line no-console
   }
 
   maskSensitive(str) {
@@ -62,7 +60,7 @@ const Base = class {
 
   debug(msg) {
     if (this.config.debug) {
-      this.log(`[${Util.colors.cyan('debug')}][${Util.colors.cyan(this.constructor.name)}] ${msg}`)
+      this.log(`[${chalk.cyan('debug')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
     }
   }
 

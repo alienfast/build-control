@@ -3,7 +3,6 @@ import Git from './git'
 import extend from 'extend'
 import fs from 'fs'
 import path from 'path'
-import crypto from 'crypto'
 import url from 'url'
 import semver from 'semver'
 import shelljs from 'shelljs'
@@ -19,7 +18,7 @@ const Default = {
     // If token && login are provided, the remote.repo will be formatted to include these
     login: undefined,
     token: undefined,
-    branch: undefined,// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
+    branch: undefined// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
   },
   tag: {
     name: undefined   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
@@ -41,9 +40,9 @@ const Default = {
     shallow: false    // Fetches branch from remote with the flag --depth=1. Which makes a shallow clone with a history truncated to the last revision. Might bring some boost on long-history repositories.
   },
   git: {
-    config: {},         // [git config](http://git-scm.com/docs/git-config) settings for the repository when preparing the repository. e.g. `{'user.name': 'John Doe'}`
+    config: {}         // [git config](http://git-scm.com/docs/git-config) settings for the repository when preparing the repository. e.g. `{'user.name': 'John Doe'}`
   },
-  force: false,     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
+  force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
 const BuildControl = class extends Base {
@@ -51,7 +50,7 @@ const BuildControl = class extends Base {
   constructor(config = {}) {
     super(extend(true, {},
       Default,
-      { tag: { name: () => this.autoResolveTagName() } }, // tag package version auto resolver
+      {tag: {name: () => this.autoResolveTagName()}}, // tag package version auto resolver
       config
     ))
 
@@ -76,16 +75,20 @@ const BuildControl = class extends Base {
   /**
    * convenience to resolve from a fn or string
    */
-  tagName(){
-    if(this.config.tag.name === false){
+  tagName() {
+    if (this.config.tag.name === false) {
       return false
     }
     else if (typeof this.config.tag.name === 'function') {
       return this.config.tag.name()
     }
-    else{
+    else {
       return this.config.tag.name()
     }
+  }
+
+  resolveBranch() {
+    return (this.config.remote.branch || this.config.branch)
   }
 
   /**
@@ -93,10 +96,10 @@ const BuildControl = class extends Base {
    * @returns {*}
    */
   autoResolveTagName() {
-    if(this.package && this.package.version) {
+    if (this.package && this.package.version) {
       return `v${this.package.version}`
     }
-    else{
+    else {
       return false
     }
   }
@@ -166,7 +169,7 @@ const BuildControl = class extends Base {
   /**
    * Initialize the git config
    */
-  initConfig() {
+  configureGit() {
     for (let key of Object.keys(this.config.git.config)) {
       this.git.configure(key, this.config.git.config[key])
     }
@@ -176,10 +179,13 @@ const BuildControl = class extends Base {
    * Create a named remote if one doesn't exist
    */
   ensureRemote() {
-    let remoteName = this.git.hash('remote', this.config.remote.repo)
-    if (!this.git.remote().includes(remoteName)) {
-      this.log('Creating remote.')
-      this.git.remoteAdd(remoteName, this.config.remote.repo)
+    let remoteUrlRegex = new RegExp('[\/\\:]')
+    if (remoteUrlRegex.test(this.config.remote.repo)) {
+      let remoteName = this.git.hash('remote', this.config.remote.repo)
+      if (!this.git.remote().includes(remoteName)) {
+        this.log('Creating remote.')
+        this.git.remoteAdd(remoteName, this.config.remote.repo)
+      }
     }
   }
 
@@ -217,9 +223,9 @@ const BuildControl = class extends Base {
    * @param dest
    */
   fetch(dest) {
-    let branch = (this.config.remote.branch || this.config.branch) + (dest ? ':' + this.config.branch : '');
+    let branch = this.resolveBranch() + (dest ? ':' + this.config.branch : '');
     this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote.repo}.`);
-    this.git.fetch(remoteName, branch, this.config.fetch.shallow)
+    this.git.fetch(this.config.remote.repo, branch, this.config.fetch.shallow)
   }
 
   /**
@@ -227,8 +233,8 @@ const BuildControl = class extends Base {
    */
   ensureLocalBranchTracksRemote() {
     let remoteBranch = this.config.remote.branch || this.config.branch;
-    if (this.git.branch(this.config.branch) !== remoteName) {
-      this.git.branchRemote(this.config.branch, remoteName, remoteBranch)
+    if (this.git.branch(this.config.branch) !== this.config.remote.repo) {
+      this.git.branchRemote(this.config.branch, this.config.remote.repo, remoteBranch)
     }
   }
 
@@ -267,7 +273,7 @@ const BuildControl = class extends Base {
    */
   tagLocalBranch() {
     // If the tag exists, skip tagging
-    if (this.git.tagExists(this.tagName(), remoteName)) {
+    if (this.git.tagExists(this.tagName(), this.config.remote.repo)) {
       this.log(`The tag "${this.tagName()}" already exists on remote. Skipping tagging.`)
       return
     }
@@ -287,9 +293,9 @@ const BuildControl = class extends Base {
       branch += `:${this.config.remote.branch}`
     }
 
-    this.git.push(remoteName, branch, this.config.force)
-    if (this.config.tag.name()) {
-      this.git.pushTag(remoteName, tag)
+    this.git.push(this.config.remote.repo, branch, this.config.force)
+    if (this.tagName()) {
+      this.git.pushTag(this.config.remote.repo, this.tagName())
     }
   }
 
@@ -307,19 +313,12 @@ const BuildControl = class extends Base {
 
       // Set up repository
       this.ensureGitInit()
-      this.initConfig()
-
-      let remoteName = this.config.remote.repo
-
-      // Regex to test for remote url
-      let remoteUrlRegex = new RegExp('[\/\\:]')
-      if (remoteUrlRegex.test(remoteName)) {
-        this.ensureRemote()
-      }
+      this.configureGit()
+      this.ensureRemote()
 
       // Set up local branch
       let localBranchExists = this.git.branchExists(this.config.branch)
-      let remoteBranchExists = this.git.branchRemoteExists((this.config.remote.branch || this.config.branch), remoteName)
+      let remoteBranchExists = this.git.branchRemoteExists(this.resolveBranch(), this.config.remote.repo)
 
       if (remoteBranchExists) {
         this.fetch()
@@ -336,7 +335,7 @@ const BuildControl = class extends Base {
       }
       else if (remoteBranchExists && !localBranchExists) { //// TEST THIS ONE
         // Create local branch that tracks remote
-        this.git.track(this.config.branch, remoteName, (this.config.remote.branch || this.config.branch))
+        this.git.track(this.config.branch, this.config.remote.repo, this.resolveBranch())
       }
       else if (!remoteBranchExists && !localBranchExists) {
         // Create local branch

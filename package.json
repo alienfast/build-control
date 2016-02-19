@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/alienfast/build-control#readme",
   "dependencies": {
+    "chalk": "^1.1.1",
     "crypto": "0.0.3",
     "semver": "^5.1.0",
     "shelljs": "^0.6.0",

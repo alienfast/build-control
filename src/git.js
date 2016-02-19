@@ -1,10 +1,7 @@
 import Base from './base'
 import extend from 'extend'
 import fs from 'fs'
-import path from 'path'
 import crypto from 'crypto'
-import url from 'url'
-import semver from 'semver'
 import shelljs from 'shelljs'
 
 const Default = {}
@@ -97,7 +94,7 @@ const Git = class extends Base {
   }
 
   checkout(branch) {
-    execWrap(`git checkout --orphan ${branch}`)
+    this.execWrap(`git checkout --orphan ${branch}`)
   }
 
   branchRemote(branch, remoteName, remoteBranch) {

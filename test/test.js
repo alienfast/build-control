@@ -68,14 +68,16 @@ let execScenario = (cb) => {
 
         // for each configuration, run an instance of BuildControl
         let configurationsPath = `${distDir}/*.json`
-        let configurations = glob.sync(configurationsPath, {realpath: true})
-        if (!configurations || configurations.length <= 0) {
+        let files = glob.sync(configurationsPath, {realpath: true})
+        if (!files || files.length <= 0) {
           throw new Error(`Unable to find any configurations at ${configurationsPath}`)
         }
 
-        let config = readConfig(configurations[0])
-        let buildControl = new BuildControl(config)
-        buildControl.run()
+        let configurations = readConfig(files[0])
+        for(let config of configurations) {
+          let buildControl = new BuildControl(config)
+          buildControl.run()
+        }
 
         //return childProcessExec(GRUNT_EXEC + ' --no-color', {cwd: distDir})
       }
