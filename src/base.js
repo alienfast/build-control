@@ -20,31 +20,45 @@ const Base = class {
   // ----------------------------------------------
   // protected
 
+  booleanExec(command, logResult = true) {
+    try {
+      this.exec(command, logResult)
+      return true
+    }
+    catch (error) {
+      return false
+    }
+  }
+
+  safeExec(command, logResult = true) {
+    try {
+      return this.exec(command, logResult)
+    }
+    catch (error) {
+      return ''
+    }
+  }
+
   /**
    * Wraps shellJs calls that act on the file structure to give better output and error handling
    * @param command
-   * @param verbose - show output on the cli after execution, defaults to true
+   * @param logResult - show output on the cli after execution, defaults to true
    * @param stream - stream the command, defaults to false
    */
-  execWrap(command, verbose = true, stream = false) {
-    if (stream) {
-      verbose = false
-    }
-
-    if (this.config.login && this.config.token) {
-      stream = false
-    }
-
+  exec(command, logResult = true) {
     this.debug(command)
 
-    let shellResult = shelljs.exec(command, {silent: (!stream)})
+    let shellResult = shelljs.exec(command, {silent: true})
     if (shellResult.code === 0) {
-      if (verbose) {
-        this.log(shellResult.output)
+
+      let result = shellResult.output
+      if (logResult && result != '') {
+        this.log(result)
       }
+      return result
     }
     else {
-      throw this.maskSensitive(shellResult.output)
+      throw new Error(this.maskSensitive(shellResult.output))
     }
   }
 

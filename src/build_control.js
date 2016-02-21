@@ -128,7 +128,7 @@ const BuildControl = class extends Base {
       throw(`Build directory ${this.config.dir} doesn't exist. Nothing to version.`)
     }
 
-    // Check that build directory conteins files
+    // Check that build directory contains files
     if (fs.readdirSync(this.config.dir).length === 0) {
       throw(`Build directory ${this.config.dir} is empty. Nothing to version.`)
     }
@@ -159,9 +159,9 @@ const BuildControl = class extends Base {
    * Initialize git repo if one doesn't exist
    */
   ensureGitInit() {
-    let repo = path.join(this.originalCwd, this.config.dir, '.git')
+    let repo = path.join(this.config.dir, '.git')
     if (!fs.existsSync(repo)) {
-      this.log(`Creating git repository in ${this.config.dir}.`)
+      //this.log(`Creating git repository in ${this.config.dir}.`)
       this.git.init()
     }
   }

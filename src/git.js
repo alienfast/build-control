@@ -13,47 +13,35 @@ const Git = class extends Base {
   }
 
   version() {
-    return (shelljs.exec('git --version', {silent: true}).output.match(/\d+\.\d+\.\d+/) || []).shift()
+    return (this.exec('git --version', false).match(/\d+\.\d+\.\d+/) || []).shift()
   }
 
   diff() {
-    return shelljs.exec('git diff').output
+    return this.exec('git diff', false)
   }
 
   sourceBranch() {
-    let result = shelljs.exec('git rev-parse --abbrev-ref HEAD', {silent: true})
-    if (result.code === 0) {
-      return result.output.replace(/\n/g, '')
-    }
-    else {
-      return null
-    }
+    return this.safeExec('git rev-parse --abbrev-ref HEAD', false).replace(/\n/g, '')
   }
 
   sourceCommit() {
-    let result = shelljs.exec('git rev-parse --short HEAD', {silent: true})
-    if (result.code === 0) {
-      return result.output.replace(/\n/g, '')
-    }
-    else {
-      return null
-    }
+    return this.safeExec('git rev-parse --short HEAD', false).replace(/\n/g, '')
   }
 
   init() {
-    this.execWrap('git init')
+    this.exec('git init')
   }
 
   configure(key, value) {
-    this.execWrap(`git config "${key}" "${value}"`)
+    this.exec(`git config "${key}" "${value}"`)
   }
 
   remote() {
-    return shelljs.exec('git remote', {silent: true}).output
+    return this.exec('git remote', false)
   }
 
   remoteAdd(name, location) {
-    this.execWrap(`git remote add ${name} ${location}`)
+    this.exec(`git remote add ${name} ${location}`)
   }
 
   /**
@@ -62,7 +50,7 @@ const Git = class extends Base {
   fetch(remoteName, branch, shallow = false) {
     let depth = shallow ? '--depth=1 ' : ''
     // `--update-head-ok` allows fetch on a branch with uncommited changes
-    this.execWrap(`git fetch --progress --verbose --update-head-ok ${depth}${remoteName} ${branch}`, false, true)
+    this.exec(`git fetch --progress --verbose --update-head-ok ${depth}${remoteName} ${branch}`) //, false, true)
   }
 
   /**
@@ -70,14 +58,14 @@ const Git = class extends Base {
    * @param branch
    */
   symbolicRefHead(branch) {
-    this.execWrap(`git symbolic-ref HEAD refs/heads/${branch}`)
+    this.exec(`git symbolic-ref HEAD refs/heads/${branch}`)
   }
 
   /**
    * Make sure the stage is clean
    */
   reset() {
-    this.execWrap('git reset', false)
+    this.exec('git reset', false)
   }
 
   /**
@@ -90,44 +78,44 @@ const Git = class extends Base {
     if (remoteBranch == null) {
       remoteBranch = branch
     }
-    shelljs.exec(`git branch --track ${branch} ${remoteName}/${remoteBranch}`, {silent: true})
+    this.exec(`git branch --track ${branch} ${remoteName}/${remoteBranch}`, false)
   }
 
   checkout(branch) {
-    this.execWrap(`git checkout --orphan ${branch}`)
+    this.exec(`git checkout --orphan ${branch}`)
   }
 
   branchRemote(branch, remoteName, remoteBranch) {
-    this.execWrap(`git branch --set-upstream-to=${remoteName}/${remoteBranch} ${this.config.branch}`)
+    this.exec(`git branch --set-upstream-to=${remoteName}/${remoteBranch} ${this.config.branch}`)
   }
 
   branch(branch) {
-    shelljs.exec(`git config branch.${branch}.remote`, {silent: true}).output.replace(/\n/g, '')
+    this.exec(`git config branch.${branch}.remote`, false).replace(/\n/g, '')
   }
 
   branchExists(branch) {
-    return (shelljs.exec(`git show-ref --verify --quiet refs/heads/${branch}`, {silent: true}).code === 0)
+    return this.booleanExec(`git show-ref --verify --quiet refs/heads/${branch}`, false)
   }
 
   branchRemoteExists(branch, remoteName) {
-    return (shelljs.exec(`git ls-remote --exit-code ${remoteName} ${branch}`, {silent: true}).code === 0)
+    return this.booleanExec(`git ls-remote --exit-code ${remoteName} ${branch}`, false)
   }
 
   /**
    *
    */
   status() {
-    let result = shelljs.exec('git status -sb --porcelain', {silent: true})
-    if (result.code === 0) {
-      return result.output
+    let result = this.safeExec('git status -sb --porcelain', false)
+    if (result === '') {
+      return null
     }
     else {
-      return null
+      return result
     }
   }
 
   add() {
-    this.execWrap('git add -A .')
+    this.exec('git add -A .')
   }
 
   hash(prefix, text) {
@@ -139,28 +127,28 @@ const Git = class extends Base {
     let commitMessageFile = this.hash('commitMessageFile', message)
     fs.writeFileSync(commitMessageFile, message)
 
-    this.execWrap(`git commit --file=${commitMessageFile}`)
+    this.exec(`git commit --file=${commitMessageFile}`)
 
     fs.unlinkSync(commitMessageFile)
   }
 
   tag(tag) {
-    this.execWrap(`git tag ${tag}`)
+    this.exec(`git tag ${tag}`)
   }
 
   tagExists(tag, remoteName) {
-    return (shelljs.exec(`git ls-remote --tags --exit-code ${remoteName} ${tag}`, {silent: true}).code === 0)
+    return this.booleanExec(`git ls-remote --tags --exit-code ${remoteName} ${tag}`, false)
   }
 
   push(remoteName, branch, force = false) {
     let withForce = force ? ' --force ' : ''
 
     this.log(`Pushing ${branch} to ${remoteName}${withForce}`)
-    this.execWrap(`git push ${withForce}${remoteName} ${branch}`, false, true)
+    this.exec(`git push ${withForce}${remoteName} ${branch}`) //, false, true)
   }
 
   pushTag(remoteName, tag) {
-    this.execWrap(`git push ${remoteName} ${tag}`)
+    this.exec(`git push ${remoteName} ${tag}`)
   }
 }
 
