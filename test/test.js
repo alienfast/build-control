@@ -35,9 +35,9 @@ let should = chai.should()
  * NOTE: this function DOES change the process's working directory to the `scenario` so that
  * validations are easier access.
  *
- * @param {scenarioCallback} cb - The callback that handles the response
+ * @param {scenarioCallback} assertionCallback - The callback that handles the response
  */
-let execScenario = (cb) => {
+let execScenario = (assertionCallback) => {
 
   let mockRepoDir = path.normalize(__dirname + '/mock')
   let distDir = path.join(mockRepoDir, 'repo')
@@ -75,16 +75,19 @@ let execScenario = (cb) => {
         }
 
         let configurations = readConfig(files[0])
+        let buildControls = []
 
         //capture the logs and verify the output
         let logs = ``
         for (let config of configurations) {
+          //config['debug'] = true
           let buildControl = new LogCaptureBuildControl(config)
+          buildControls.push(buildControl)
           buildControl.run()
           logs += buildControl.logs.join('\n')
         }
 
-        return { error: null, stdout: logs, stderror: null }
+        return {error: null, stdout: logs, stderror: null, buildControls: buildControls}
       }
       finally {
         shelljs.cd(originalPwd)
@@ -97,7 +100,7 @@ let execScenario = (cb) => {
       return childProcessExec('git clone remote validate', {cwd: mockRepoDir})
     })
     .then((processOutput) => {
-      return cb(processOutput.error, processOutput.stdout, processOutput.stderr)
+      return assertionCallback(processOutput.error, processOutput.stdout, processOutput.stderr, processOutput.buildControls)
     })
 }
 
@@ -110,8 +113,6 @@ const LogCaptureBuildControl = class extends BuildControl {
     // hack to get the git messages as well
     this.originalGitLog = this.git.log
     this.git.log = ((msg) => {
-
-      //fancyLog(`******************Git log messages!`)
       this.logs.push(this.maskSensitive(msg))
       this.originalGitLog(msg)
     })
@@ -137,7 +138,7 @@ let readConfig = (path) => {
 let childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
     fancyLog(`test: ${command}`)
-    childProcess.exec(command, options, function (err, stdout, stderr) {
+    childProcess.exec(command, options, function (err, stdout, stderr, buildControls) {
       return resolve({
         error: err,
         stdout: stdout,
@@ -145,6 +146,14 @@ let childProcessExec = (command, options) => {
       })
     })
   })
+}
+
+let assertBuildControls = (buildControls, length) => {
+  expect(buildControls).not.to.equal(null)
+  expect(buildControls).to.be.a('array');
+  expect(buildControls).to.have.length(length)
+  expect(buildControls[0]).to.be.a('object');
+  return buildControls
 }
 
 /**
@@ -191,7 +200,6 @@ describe('buildcontrol', function () {
 
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
-
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
@@ -208,11 +216,17 @@ describe('buildcontrol', function () {
 
         // verify output from grunt
         .then(() => {
-          return execScenario(function (err, stdout, stderr) {
+          return execScenario(function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
+
+            let bc = assertBuildControls(buildControls, 1)[0]
+            expect(bc.sourceName()).to.equal('basic-deployment');
+            expect(bc.sourceCommit()).not.to.equal(null);
+            expect(bc.sourceBranch()).to.equal('master');
+            expect(bc.tagName()).to.equal('v0.0.1');
+
             expect(stdout).to.contain('Initialized empty Git repository')
             expect(stdout).to.contain('Committing changes to "master".')
-            expect(stdout).to.match(/Built basic-deployment v0\.0\.1 from commit \w+ on branch master/g)
             expect(stdout).to.contain('Pushing master to ../../remote')
           })
         })
@@ -236,58 +250,49 @@ describe('buildcontrol', function () {
     })
   })
 
-  describe('feature branch deployment',  function() {
-    it('should contain the correct sourceBranch name', (done) => {
-      let tasks = []
+  describe('feature branch deployment', function () {
+    it('should contain the correct sourceBranch name', () => {
+      return Promise.resolve()
 
-      /**
-       * Test case specific setup
-       */
-      tasks.push(function git_init(next) {
-        childProcess.exec('git init', next)
-      })
-
-      tasks.push(function git_init(next) {
-        childProcess.exec('git checkout -b feature/numbers', next)
-      })
-
-      tasks.push(function git_add(next) {
-        childProcess.exec('git add .', next)
-      })
-
-      tasks.push(function git_commit(next) {
-        childProcess.exec('git commit -m "feature branch deployment"', next)
-      })
-
-      /**
-       * Execute scenario
-       */
-      tasks.push(function execute_scenario(next) {
-        execScenario((err) => {
-          expect(err).to.not.exist
-          next()
+        // Test case specific setup
+        .then(() => {
+          return childProcessExec('git init', {cwd: 'repo'})
         })
-      })
 
-      tasks.push(function verify_commit_message(next) {
-        childProcess.exec('git log -1 --pretty=%B', {cwd: 'validate'}, (err, stdout) => {
-          let commitMsg = stdout.replace(/\n/g, '')
-          expect(commitMsg).to.equal('feature/numbers')
-          next()
+        .then(() => {
+          return childProcessExec('git checkout -b feature/numbers', {cwd: 'repo'})
         })
-      })
 
-      async.series(tasks, done)
+        .then(() => {
+          return childProcessExec('git add .', {cwd: 'repo'})
+        })
+
+        .then(() => {
+          return childProcessExec('git commit -m "feature branch deployment"', {cwd: 'repo'})
+        })
+
+        // Execute scenario
+        .then(() => {
+          return execScenario(function (err, stdout, stderr, buildControls) {
+            expect(err).to.equal(null)
+            expect(err).to.not.exist
+          })
+        })
+        .then(() => {
+          return childProcessExec('git log -1 --pretty=%B', {cwd: 'validate'}).then((results) => {
+            let commitMsg = results.stdout.replace(/\n/g, '')
+            expect(commitMsg).to.equal('feature/numbers')
+          })
+        })
     })
-
   })
 
 
-  //describe('merge multiple repos',  function() {
+  //describe('merge multiple repos', function () {
   //  this.timeout(30000)
   //
   //  it('merge multiple repos', (done) => {
-  //    execScenario((err, stdout, stderr) => {
+  //    execScenario(function (err, stdout, stderr, buildControls){
   //      expect(err).to.not.exist
   //      let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
   //      expect(numberFile).be.eql('0 1 2\n')
@@ -296,8 +301,8 @@ describe('buildcontrol', function () {
   //  })
   //
   //})
-  //
-  //
+
+
   //describe('simple deploy',  function() {
   //  it('should deploy multiple times with the correct commit message', (done) => {
   //    let tasks = []
@@ -478,7 +483,7 @@ describe('buildcontrol', function () {
   //      //options
   //      GRUNT_EXEC += ' --no-color'
   //
-  //      childProcess.exec(GRUNT_EXEC, {cwd: 'repo'}, (err, stdout, stderr) => {
+  //      childProcess.exec(GRUNT_EXEC, {cwd: 'repo'}, function (err, stdout, stderr, buildControls){
   //        // mask error because remote paths may not exist
   //        next(null, {stdout: stdout, stderr: stderr})
   //      })
@@ -644,28 +649,28 @@ describe('buildcontrol', function () {
   //    })
   //
   //    tasks.push((next) => {
-  //      execScenario((err, stdout, stderr) => {
+  //      execScenario(function (err, stdout, stderr, buildControls){
   //        expect(err).to.not.exist
   //        next(err)
   //      })
   //    })
   //
   //    tasks.push((next) => {
-  //      childProcess.exec('git config user.name', {cwd: 'repo/dist'}, (err, stdout, stderr) => {
+  //      childProcess.exec('git config user.name', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('John Doe')
   //        next(err)
   //      })
   //    })
   //
   //    tasks.push((next) => {
-  //      childProcess.exec('git config user.email', {cwd: 'repo/dist'}, (err, stdout, stderr) => {
+  //      childProcess.exec('git config user.email', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('johndoe@example.com')
   //        next(err)
   //      })
   //    })
   //
   //    tasks.push((next) => {
-  //      childProcess.exec('git config http.sslVerify', {cwd: 'repo/dist'}, (err, stdout, stderr) => {
+  //      childProcess.exec('git config http.sslVerify', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('false')
   //        next(err)
   //      })
@@ -781,7 +786,7 @@ describe('buildcontrol', function () {
   //
   //        // pretend there was some unchanged files
   //        fs.writeFileSync('repo/file.txt', 'more content added.\n')
-  //        return execScenario(function (err, stdout, stderr) {
+  //        return execScenario(function (err, stdout, stderr, buildControls) {
   //          expect(err).to.not.equal(null)
   //          expect(stdout).to.contain('more content added.')
   //          expect(stdout).to.contain('Warning: There are uncommitted changes in your working directory.')
