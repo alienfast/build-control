@@ -185,20 +185,23 @@ describe('buildcontrol', function () {
   beforeEach(function (done) {
     // the describe is the mock folder's name.
     let scenarioPath = this.currentTest.parent.title
+    let from = `scenarios/${scenarioPath}`
+    let to = 'mock'
 
     // ensure that we reset to `test/` dir
     shelljs.cd(__dirname)
 
     // clean testing folder `test/mock`
-    fs.removeSync('mock')
-    fs.ensureDirSync('mock')
+    fs.removeSync(to)
+    fs.ensureDirSync(to)
 
     try {
+      fancyLog(`Copying from ${from} to ${to}...`)
       // copy scenario to `test/mock`
-      fs.copySync('scenarios/' + scenarioPath, 'mock')
+      fs.copySync(from, to)
 
       // ensure all tests are are assuming the current working directory is: `test/mock`
-      process.chdir('mock')
+      process.chdir(to)
       done()
     }
     catch (err) {
@@ -213,6 +216,7 @@ describe('buildcontrol', function () {
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
 
+  /*
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
@@ -364,8 +368,7 @@ describe('buildcontrol', function () {
   })
 
   describe('secure endpoint', function () {
-    it('should not log out secure information', () => {
-
+    it('should mask sensitive information', () => {
       return Promise.resolve()
         .then(() => {
           return execScenario(function (err, stdout, stderr, buildControls) {
@@ -376,91 +379,69 @@ describe('buildcontrol', function () {
         })
         .then(() => {
           // 'should have the correct remote url in git'
-          return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
-            expect(stdout).to.contain('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
-          })
+          return childProcessExec('git remote -v', {cwd: 'repo/dist'})
+            .then((results) => {
+              expect(results.stdout).to.contain('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
+              expect(results.stdout).not.to.contain('<credentials>@github.com/pubUsername/temp.git')
+            })
         })
     })
   })
+  */
 
-  //
-  //describe('untracked branch in src repo',  function() {
-  //  it('should track a branch in ../ if it was untracked', () => {
-  //    return Promise.resolve()
-  //
-  //    .then(() => {
-  //      fs.removeSync('repo')
-  //      return childProcessExec('git clone remote repo', next)
-  //    })
-  //
-  //
-  //    .then(() => {
-  //      fs.ensureDirSync('repo/build')
-  //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
-  //
-  //    })
-  //
-  //    //tasks.push((next) { return childProcessExec('git branch --track build origin/build', {cwd: 'repo'}, next) }) =>
-  //
-  //    .then(() => {
-  //      return execScenario(function (err, stdout, stderr, buildControls) {
-  //        next(err)
-  //      })
-  //    })
-  //
-  //    .then(() => {
-  //      return childProcessExec('git checkout build', {cwd: 'repo'}, (err, stdout) => {
-  //
-  //      })
-  //    })
-  //
-  //    .then(() => {
-  //      return childProcessExec('git log', {cwd: 'repo'}, (err, stdout) => {
-  //        expect(stdout).have.string('a build commit')
-  //
-  //      })
-  //    })
-  //
-  //
-  //  })
-  //
-  //
-  //  it('should not set tracking info it branch already exists', () => {
-  //    return Promise.resolve()
-  //
-  //    .then(() => {
-  //      fs.removeSync('repo')
-  //      return childProcessExec('git clone remote repo', next)
-  //    })
-  //
-  //    .then(() => {
-  //      return childProcessExec('git branch build', {cwd: 'repo'}, next)
-  //    })
-  //
-  //    .then(() => {
-  //      fs.ensureDirSync('repo/build')
-  //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
-  //
-  //    })
-  //
-  //    .then(() => {
-  //      return execScenario(function (err, stdout, stderr, buildControls) {
-  //        next(err)
-  //      })
-  //    })
-  //
-  //    .then(() => {
-  //      return childProcessExec('git branch -lvv', {cwd: 'repo'}, (err, stdout) => {
-  //        expect(stdout).not.have.string('origin/build')
-  //
-  //      })
-  //    })
-  //
-  //
-  //  })
-  //
-  //})
-  //
+  describe('untracked branch in src repo', function () {
+    it('should track a branch in ../ if it was untracked', () => {
+      return Promise.resolve()
+        .then(() => {
+          fs.removeSync('repo')
+          return childProcessExec('git clone remote repo')
+        })
+        .then(() => {
+          fs.ensureDirSync('repo/build')
+          fs.writeFileSync('repo/build/hello.txt', 'hello world!')
+        })
+        .then(() => {
+          return execScenario(function (err, stdout, stderr, buildControls) {
+          })
+        })
+        .then(() => {
+          return childProcessExec('git checkout build', {cwd: 'repo'})
+        })
+        .then(() => {
+          return childProcessExec('git log', {cwd: 'repo'})
+            .then((results) => {
+              expect(results.stdout).to.contain('a build commit for the untracked branch scenario')
+            })
+        })
+    })
+
+    //it('should not set tracking info it branch already exists', () => {
+    //  return Promise.resolve()
+    //    .then(() => {
+    //      fs.removeSync('repo')
+    //      return childProcessExec('git clone remote repo')
+    //    })
+    //
+    //    .then(() => {
+    //      return childProcessExec('git branch build', {cwd: 'repo'})
+    //    })
+    //    .then(() => {
+    //      fs.ensureDirSync('repo/build')
+    //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
+    //    })
+    //    .then(() => {
+    //      return execScenario(function (err, stdout, stderr, buildControls) {
+    //
+    //      })
+    //    })
+    //    .then(() => {
+    //      return childProcessExec('git branch -lvv', {cwd: 'repo'}).then((results) => {
+    //        expect(result.stdout).not.to.contain('origin/build')
+    //      })
+    //    })
+    //})
+  })
+
   //
   //describe('remote urls',  function() {
   //  function generateRemote(url, cb) {

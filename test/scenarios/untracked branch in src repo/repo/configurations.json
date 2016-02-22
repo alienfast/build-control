@@ -1,0 +1,13 @@
+[
+  {
+    "remote":{
+      "repo": "../"
+    },
+    "cwd": "build",
+    "branch": "build",
+    "connectCommits": false,
+    "commit": {
+      "template": "a build commit for the untracked branch scenario"
+    }
+  }
+]
