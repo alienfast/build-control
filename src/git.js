@@ -87,11 +87,16 @@ const Git = class extends Base {
   }
 
   branchRemote(branch, remoteName, remoteBranch) {
-    this.exec(`git branch --set-upstream-to=${remoteName}/${remoteBranch} ${this.config.branch}`)
+    this.exec(`git branch --set-upstream-to=${remoteName}/${remoteBranch} ${branch}`)
   }
 
-  branch(branch) {
-    this.exec(`git config branch.${branch}.remote`, false).replace(/\n/g, '')
+  configBranchRemote(branch) {
+    try {
+      return this.exec(`git config branch.${branch}.remote`, false).replace(/\n/g, '')
+    }
+    catch (error) {
+      return null
+    }
   }
 
   branchExists(branch) {

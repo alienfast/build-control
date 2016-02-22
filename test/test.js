@@ -139,7 +139,7 @@ let readConfig = (path) => {
 let childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
     fancyLog(`test: ${command}`)
-    childProcess.exec(command, options, function (err, stdout, stderr, buildControls) {
+    return childProcess.exec(command, options, function (err, stdout, stderr, buildControls) {
       return resolve({
         error: err,
         stdout: stdout,
@@ -283,18 +283,19 @@ describe('buildcontrol', function () {
           })
         })
         .then(() => {
-          return childProcessExec('git log -1 --pretty=%B', {cwd: 'validate'}).then((results) => {
-            let commitMsg = results.stdout.replace(/\n/g, '')
-            expect(commitMsg).to.equal('feature/numbers')
-          })
+          return childProcessExec('git log -1 --pretty=%B', {cwd: 'validate'})
+            .then((results) => {
+              let commitMsg = results.stdout.replace(/\n/g, '')
+              expect(commitMsg).to.equal('feature/numbers')
+            })
         })
     })
   })
 
   describe('merge multiple repos', function () {
 
-    it('merge multiple repos', (done) => {
-      execScenario(function (err, stdout, stderr, buildControls) {
+    it('merge multiple repos', () => {
+      return execScenario(function (err, stdout, stderr, buildControls) {
         expect(err).to.equal(null)
         let bc = assertBuildControls(buildControls, 2)[1]
         expect(bc.sourceName()).to.equal('repo') // from the parent dir name
@@ -304,61 +305,60 @@ describe('buildcontrol', function () {
 
         let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
         expect(numberFile).be.eql('0 1 2\n')
-        done()
       })
     })
   })
 
 
-  //describe('simple deploy',  function() {
-  //  it('should deploy multiple times with the correct commit message', (done) => {
-  //    let tasks = []
-  //
-  //    tasks.push((next) => {
-  //      execScenario(() => {
-  //        let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
-  //        expect(numberFile).be.eql('1 2 3 4\n')
-  //        next()
-  //      })
-  //    })
-  //
-  //    tasks.push((next) => {
-  //      fs.writeFileSync('repo/dist/numbers.txt', '100 200')
-  //
-  //      execScenario((err, results) => {
-  //        let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
-  //        expect(numberFile).be.eql('100 200')
-  //        next()
-  //      })
-  //    })
-  //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
-  //        expect(stdout).have.string('simple deploy commit message')
-  //        next()
-  //      })
-  //    })
-  //
-  //    async.series(tasks, done)
-  //  })
-  //
-  //
-  //  it('should not have <TOKEN> in the message', (done) => {
-  //    execScenario((err, stdout) => {
-  //      expect(err).to.not.exist
-  //      expect(stdout).not.have.string('<TOKEN>')
-  //      done()
-  //    })
-  //  })
-  //
-  //})
-  //
+  describe('simple deploy', function () {
+    it('should deploy multiple times with the correct commit message', () => {
+      return Promise.resolve()
+
+        .then(() => {
+          return execScenario(function (err, stdout, stderr, buildControls) {
+            expect(err).to.equal(null)
+            let bc = assertBuildControls(buildControls, 1)[0]
+
+            let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
+            expect(numberFile).be.eql('1 2 3 4\n')
+          })
+        })
+
+        .then(() => {
+          fs.writeFileSync('repo/dist/numbers.txt', '100 200')
+
+          return execScenario(function (err, stdout, stderr, buildControls) {
+            expect(err).to.equal(null)
+            let bc = assertBuildControls(buildControls, 1)[0]
+
+            let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
+            expect(numberFile).be.eql('100 200')
+          })
+        })
+
+        .then(() => {
+          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'})
+            .then((results) => {
+              expect(results.stdout).have.string('simple deploy commit message')
+            })
+        })
+    })
+
+
+    it('should not have <TOKEN> in the message', () => {
+      return execScenario(function (err, stdout, stderr, buildControls) {
+        expect(err).to.not.exist
+        expect(stdout).not.have.string('<TOKEN>')
+      })
+    })
+  })
+
   //
   //describe('secure endpoint',  function() {
   //  it('should not log out secure information', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario((err, stdout) => {
   //        expect(stdout).not.have.string('privateUsername')
   //        expect(stdout).not.have.string('1234567890abcdef')
@@ -368,27 +368,27 @@ describe('buildcontrol', function () {
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //
   //  it('should have the correct remote url in git', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(() => {
   //        next()
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
   //        expect(stdout).have.string('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //})
@@ -396,77 +396,77 @@ describe('buildcontrol', function () {
   //
   //describe('untracked branch in src repo',  function() {
   //  it('should track a branch in ../ if it was untracked', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.removeSync('repo')
-  //      childProcess.exec('git clone remote repo', next)
+  //      return childProcessExec('git clone remote repo', next)
   //    })
   //
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.ensureDirSync('repo/build')
   //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
   //      next()
   //    })
   //
-  //    //tasks.push((next) { childProcess.exec('git branch --track build origin/build', {cwd: 'repo'}, next) }) =>
+  //    //tasks.push((next) { return childProcessExec('git branch --track build origin/build', {cwd: 'repo'}, next) }) =>
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario((err, stdout) => {
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git checkout build', {cwd: 'repo'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git checkout build', {cwd: 'repo'}, (err, stdout) => {
   //        next()
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log', {cwd: 'repo'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log', {cwd: 'repo'}, (err, stdout) => {
   //        expect(stdout).have.string('a build commit')
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //
   //  it('should not set tracking info it branch already exists', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.removeSync('repo')
-  //      childProcess.exec('git clone remote repo', next)
+  //      return childProcessExec('git clone remote repo', next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git branch build', {cwd: 'repo'}, next)
+  //    .then(() => {
+  //      return childProcessExec('git branch build', {cwd: 'repo'}, next)
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.ensureDirSync('repo/build')
   //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
   //      next()
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario((err, stdout) => {
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git branch -lvv', {cwd: 'repo'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git branch -lvv', {cwd: 'repo'}, (err, stdout) => {
   //        expect(stdout).not.have.string('origin/build')
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //})
@@ -474,7 +474,7 @@ describe('buildcontrol', function () {
   //
   //describe('remote urls',  function() {
   //  function generateRemote(url, cb) {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
   //    // read template
   //    let gruntfile = fs.readFileSync('repo/gruntfile.js', {encoding: 'UTF8'})
@@ -486,19 +486,19 @@ describe('buildcontrol', function () {
   //    fs.writeFileSync('repo/gruntfile.js', gruntfile)
   //
   //    // execute grunt command
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      //options
   //      GRUNT_EXEC += ' --no-color'
   //
-  //      childProcess.exec(GRUNT_EXEC, {cwd: 'repo'}, function (err, stdout, stderr, buildControls){
+  //      return childProcessExec(GRUNT_EXEC, {cwd: 'repo'}, function (err, stdout, stderr, buildControls){
   //        // mask error because remote paths may not exist
   //        next(null, {stdout: stdout, stderr: stderr})
   //      })
   //    })
   //
   //    // get remote url
-  //    tasks.push((next) => {
-  //      childProcess.exec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
   //        next(err, stdout)
   //      })
   //    })
@@ -562,22 +562,22 @@ describe('buildcontrol', function () {
   //
   //describe('push diff branches',  function() {
   //  it('should push local:stage to stage:master and local:prod to prod:master', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario((err, stdout) => {
   //        fs.removeSync('validate')  // not needed because there's two diff remotes
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.removeSync('stage_validate')
-  //      childProcess.exec('git clone stage_remote stage_validate', next)
+  //      return childProcessExec('git clone stage_remote stage_validate', next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
   //        expect(stdout).have.string('first stage commit')
   //        expect(stdout).have.string('new stage commit')
   //        next()
@@ -585,171 +585,171 @@ describe('buildcontrol', function () {
   //    })
   //
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.removeSync('prod_validate')
-  //      childProcess.exec('git clone prod_remote prod_validate', next)
+  //      return childProcessExec('git clone prod_remote prod_validate', next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
   //        expect(stdout).have.string('first prod commit')
   //        expect(stdout).have.string('new prod commit')
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //
   //  it('should do it multiple times', (done) => {
   //    this.timeout(30000)
   //
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(next)
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.writeFileSync('repo/dist/empty_file', 'file not empty anymore')
   //      next()
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git clone stage_remote stage_validate', next)
+  //    .then(() => {
+  //      return childProcessExec('git clone stage_remote stage_validate', next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
   //        expect(stdout.match(/new stage commit/g)).be.length(2)
   //        next()
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git clone prod_remote prod_validate', next)
+  //    .then(() => {
+  //      return childProcessExec('git clone prod_remote prod_validate', next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
   //        expect(stdout.match(/new prod commit/g)).be.length(2)
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //})
   //
   //
   //describe('git config',  function() {
   //  it('should set git config variables properly', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git init', {cwd: 'repo/dist'}, next)
+  //    .then(() => {
+  //      return childProcessExec('git init', {cwd: 'repo/dist'}, next)
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(function (err, stdout, stderr, buildControls){
   //        expect(err).to.not.exist
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git config user.name', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
+  //    .then(() => {
+  //      return childProcessExec('git config user.name', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('John Doe')
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git config user.email', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
+  //    .then(() => {
+  //      return childProcessExec('git config user.email', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('johndoe@example.com')
   //        next(err)
   //      })
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git config http.sslVerify', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
+  //    .then(() => {
+  //      return childProcessExec('git config http.sslVerify', {cwd: 'repo/dist'}, function (err, stdout, stderr, buildControls){
   //        expect(stdout).have.string('false')
   //        next(err)
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //})
   //
   //
   //describe('deploy to named remote',  function() {
   //  it('should have deployed to origin', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git init', {cwd: 'repo/dist'}, next)
+  //    .then(() => {
+  //      return childProcessExec('git init', {cwd: 'repo/dist'}, next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git remote add origin ../../remote', {cwd: 'repo/dist'}, next)
+  //    .then(() => {
+  //      return childProcessExec('git remote add origin ../../remote', {cwd: 'repo/dist'}, next)
   //    })
   //
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(next)
   //    })
   //
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
   //        expect(stdout).have.string('new grunt-build commit')
   //        next()
   //      })
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //})
   //
   //
   //describe('force push',  function() {
   //  beforeEach(function(done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
   //    // initialize dist to be a repo and make a commit
   //    // this commit is a "bad" commit
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario(next)
   //    })
   //
   //    // we set our dist repo to be one commit behind remote
-  //    tasks.push((next) => {
-  //      childProcess.exec('git reset --hard HEAD^ ', {cwd: 'repo/dist'}, next)
+  //    .then(() => {
+  //      return childProcessExec('git reset --hard HEAD^ ', {cwd: 'repo/dist'}, next)
   //    })
   //
   //
   //    // now we'll go and diverge.
   //    // remember we're 1 behind, 1 ahead
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      fs.writeFileSync('repo/dist/numbers.txt', '9 9 9 9')
-  //      childProcess.exec('git commit -m "number 3 commit" .', {cwd: 'repo/dist'}, next)
+  //      return childProcessExec('git commit -m "number 3 commit" .', {cwd: 'repo/dist'}, next)
   //    })
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //
   //
   //  it('should force push', (done) => {
-  //    let tasks = []
+  //    return Promise.resolve()
   //
   //    // we're now going to push to the remote, since we've commited before
   //    // there will be nothing new to commit. This is just a push to remote
   //    // however, we're forcing remote to track the dist repo.
-  //    tasks.push((next) => {
+  //    .then(() => {
   //      execScenario((err, stdout) => {
   //        next(err)
   //      })
@@ -757,8 +757,8 @@ describe('buildcontrol', function () {
   //
   //    // the dist repo has 2 commits, namely "number 3 commit"
   //    // and it should not have the old commit "commit to be overwritten"
-  //    tasks.push((next) => {
-  //      childProcess.exec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
+  //    .then(() => {
+  //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
   //        expect(stdout).have.string('number 3 commit')
   //        expect(stdout).not.have.string('commit to be overwritten')
   //        next()
@@ -766,7 +766,7 @@ describe('buildcontrol', function () {
   //    })
   //
   //
-  //    async.series(tasks, done)
+  //
   //  })
   //})
   //

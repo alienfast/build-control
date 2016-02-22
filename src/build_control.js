@@ -176,6 +176,8 @@ const BuildControl = class extends Base {
    * Initialize the git config
    */
   configureGit() {
+
+    this.debugDump(`this.config.git.config`, this.config.git.config)
     for (let key of Object.keys(this.config.git.config)) {
       this.git.configure(key, this.config.git.config[key])
     }
@@ -237,7 +239,7 @@ const BuildControl = class extends Base {
    */
   ensureLocalBranchTracksRemote() {
     let remoteBranch = this.config.remote.branch || this.config.branch;
-    if (this.git.branch(this.config.branch) !== this.config.remote.name) {
+    if (this.git.configBranchRemote(this.config.branch) !== this.config.remote.name) {
       this.git.branchRemote(this.config.branch, this.config.remote.name, remoteBranch)
     }
   }

@@ -24,10 +24,8 @@ const Base = class {
       this.config.cwd = path.join(shelljs.pwd(), this.config.cwd)
     }
 
-    // hack - tests override #log and we need to complete construction before logging
-    setTimeout(() => {
-      this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
-    }, 1)
+    // TODO: tests override #log and we need to complete construction before logging....not sure how to make that happen, setTimeout is hokey and doesn't work right
+    //this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
 
   // ----------------------------------------------
@@ -65,29 +63,13 @@ const Base = class {
 
     this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
     let shellResult = shelljs.exec(command, options)
-    if (shellResult.code === 0) {
+    if (shellResult.code === 0 || shellResult.code === 1) {
 
-      // ---
-      // Log the result
-      // strangely enough, sometimes useful messages from git are an stderr even when it is a successful command with a 0 result code
-      let output = shellResult.stdout
-      if (output == '') {
-        output = shellResult.stderr
-      }
-
-      //this.log(stringify(shellResult))
-      if (output != '') {
-        if (logResult) {
-          this.log(output)
-        }
-        else {
-          this.debug(`[output] \n${output}`)
-        }
-      }
+      let output = this.logShellOutput(shellResult, logResult);
 
       // ---
       // determine the return value
-      if(returnCode){
+      if (returnCode) {
         return shellResult.code
       }
       else {
@@ -99,11 +81,32 @@ const Base = class {
         return shellResult.code
       }
       else {
-        let msg = `Command failed \`${command}\`: ${shellResult.stderr}.  CWD: ${shelljs.pwd()}`
+        let msg = `Command failed \`${command}\`, cwd: ${options.cwd}: ${shellResult.stderr}.`
         this.error(msg)
         throw new Error(this.maskSensitive(msg))
       }
     }
+  }
+
+  logShellOutput(shellResult, logResult) {
+    // ---
+    // Log the result
+    // strangely enough, sometimes useful messages from git are an stderr even when it is a successful command with a 0 result code
+    let output = shellResult.stdout
+    if (output == '') {
+      output = shellResult.stderr
+    }
+
+    //this.log(stringify(shellResult))
+    if (output != '') {
+      if (logResult) {
+        this.log(output)
+      }
+      else {
+        this.debug(`[output] \n${output}`)
+      }
+    }
+    return output;
   }
 
   log(msg) {
