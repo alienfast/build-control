@@ -7,7 +7,7 @@ import pathIsAbsolute from 'path-is-absolute'
 import path from 'path'
 
 export const Default = {
-  debug: true
+  debug: false
 }
 
 const Base = class {
@@ -65,7 +65,15 @@ const Base = class {
     this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
     let shellResult = shelljs.exec(command, options)
     if (shellResult.code === 0) {
-      let output = shellResult.output
+
+      // strangely enough, sometimes useful messages from git are an stderr even when it is a successful command with a 0 result code
+      let output = shellResult.stdout
+      if (output == '') {
+        output = shellResult.stderr
+      }
+
+      //this.log(stringify(shellResult))
+
       if (output != '') {
         if (logResult) {
           this.log(output)
