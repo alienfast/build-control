@@ -9,10 +9,11 @@ import shelljs from 'shelljs'
 //import _ from 'lodash'
 import Promise from 'bluebird'
 import fancyLog from 'fancy-log'
+import stringify from 'stringify-object'
 
 let expect = chai.expect
 
-let debug = false
+let debug = true
 
 /**
  *  @callback scenarioCallback
@@ -37,7 +38,7 @@ let debug = false
  *
  * @param {scenarioCallback} assertionCallback - The callback that handles the response
  */
-let execScenario = (assertionCallback) => {
+let execScenario = (assertionCallback, allowErrors = false) => {
 
   let mockRepoDir = path.normalize(__dirname + '/mock')
   let distDir = path.join(mockRepoDir, 'repo')
@@ -50,11 +51,6 @@ let execScenario = (assertionCallback) => {
     .tap(() => {
       fs.ensureDirSync(remoteDir)
       return childProcessExec('git init --bare', {cwd: remoteDir})
-    })
-
-    // make `repo/` a repository
-    .tap(() => {
-      //return childProcessExec('git init', {cwd: distDir})
     })
 
     // execute the grunt default command
@@ -84,8 +80,18 @@ let execScenario = (assertionCallback) => {
           config['debug'] = debug
           let buildControl = new LogCaptureBuildControl(config)
           buildControls.push(buildControl)
-          buildControl.run()
-          logs += buildControl.logs.join('\n')
+          try {
+            buildControl.run()
+          }
+          catch (error) {
+            if (!allowErrors) {
+              throw error
+            }
+            else {
+              fancyLog(`Errors are expected on this test`)
+            }
+          }
+          logs += buildControl.allLogs()
         }
 
         return {error: null, stdout: logs, stderror: null, buildControls: buildControls}
@@ -101,6 +107,7 @@ let execScenario = (assertionCallback) => {
       return childProcessExec('git clone remote validate', {cwd: mockRepoDir})
     })
     .then((processOutput) => {
+      //fancyLog(`calling assertionCallback with \n${stringify(processOutput)}`)
       return assertionCallback(processOutput.error, processOutput.stdout, processOutput.stderr, processOutput.buildControls)
     })
 }
@@ -122,6 +129,10 @@ const LogCaptureBuildControl = class extends BuildControl {
   log(msg) {
     this.logs.push(this.maskSensitive(msg))
     super.log(msg)
+  }
+
+  allLogs() {
+    return this.logs.join('\n')
   }
 }
 
@@ -309,11 +320,10 @@ describe('buildcontrol', function () {
     })
   })
 
-
   describe('simple deploy', function () {
     it('should deploy multiple times with the correct commit message', () => {
-      return Promise.resolve()
 
+      return Promise.resolve()
         .then(() => {
           return execScenario(function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
@@ -353,49 +363,29 @@ describe('buildcontrol', function () {
     })
   })
 
-  //
-  //describe('secure endpoint',  function() {
-  //  it('should not log out secure information', (done) => {
-  //    return Promise.resolve()
-  //
-  //    .then(() => {
-  //      execScenario((err, stdout) => {
-  //        expect(stdout).not.have.string('privateUsername')
-  //        expect(stdout).not.have.string('1234567890abcdef')
-  //        expect(stdout).have.string('github.com/pubUsername/temp.git')
-  //        expect(stdout).have.string('<CREDENTIALS>')
-  //        next()
-  //      })
-  //    })
-  //
-  //
-  //  })
-  //
-  //
-  //  it('should have the correct remote url in git', (done) => {
-  //    return Promise.resolve()
-  //
-  //    .then(() => {
-  //      execScenario(() => {
-  //        next()
-  //      })
-  //    })
-  //
-  //    .then(() => {
-  //      return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
-  //        expect(stdout).have.string('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
-  //        next()
-  //      })
-  //    })
-  //
-  //
-  //  })
-  //
-  //})
-  //
+  describe('secure endpoint', function () {
+    it('should not log out secure information', () => {
+
+      return Promise.resolve()
+        .then(() => {
+          return execScenario(function (err, stdout, stderr, buildControls) {
+            expect(stdout).not.to.contain('privateUsername')
+            expect(stdout).not.to.contain('1234567890abcdef')
+            expect(stdout).to.contain('<credentials>@github.com/pubUsername/temp.git')
+          }, true)
+        })
+        .then(() => {
+          // 'should have the correct remote url in git'
+          return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
+            expect(stdout).to.contain('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
+          })
+        })
+    })
+  })
+
   //
   //describe('untracked branch in src repo',  function() {
-  //  it('should track a branch in ../ if it was untracked', (done) => {
+  //  it('should track a branch in ../ if it was untracked', () => {
   //    return Promise.resolve()
   //
   //    .then(() => {
@@ -407,27 +397,27 @@ describe('buildcontrol', function () {
   //    .then(() => {
   //      fs.ensureDirSync('repo/build')
   //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
-  //      next()
+  //
   //    })
   //
   //    //tasks.push((next) { return childProcessExec('git branch --track build origin/build', {cwd: 'repo'}, next) }) =>
   //
   //    .then(() => {
-  //      execScenario((err, stdout) => {
+  //      return execScenario(function (err, stdout, stderr, buildControls) {
   //        next(err)
   //      })
   //    })
   //
   //    .then(() => {
   //      return childProcessExec('git checkout build', {cwd: 'repo'}, (err, stdout) => {
-  //        next()
+  //
   //      })
   //    })
   //
   //    .then(() => {
   //      return childProcessExec('git log', {cwd: 'repo'}, (err, stdout) => {
   //        expect(stdout).have.string('a build commit')
-  //        next()
+  //
   //      })
   //    })
   //
@@ -435,7 +425,7 @@ describe('buildcontrol', function () {
   //  })
   //
   //
-  //  it('should not set tracking info it branch already exists', (done) => {
+  //  it('should not set tracking info it branch already exists', () => {
   //    return Promise.resolve()
   //
   //    .then(() => {
@@ -450,11 +440,11 @@ describe('buildcontrol', function () {
   //    .then(() => {
   //      fs.ensureDirSync('repo/build')
   //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
-  //      next()
+  //
   //    })
   //
   //    .then(() => {
-  //      execScenario((err, stdout) => {
+  //      return execScenario(function (err, stdout, stderr, buildControls) {
   //        next(err)
   //      })
   //    })
@@ -462,7 +452,7 @@ describe('buildcontrol', function () {
   //    .then(() => {
   //      return childProcessExec('git branch -lvv', {cwd: 'repo'}, (err, stdout) => {
   //        expect(stdout).not.have.string('origin/build')
-  //        next()
+  //
   //      })
   //    })
   //
@@ -529,7 +519,7 @@ describe('buildcontrol', function () {
   //
   //
   //  async.each(shouldMatch, (url) => {
-  //    it('should have created remote for: ' + url, (done) => {
+  //    it('should have created remote for: ' + url, () => {
   //      generateRemote(url, (err, remoteURL) => {
   //        expect(remoteURL).have.string(url)
   //        done()
@@ -548,7 +538,7 @@ describe('buildcontrol', function () {
   //  ]
   //
   //  async.each(shouldNotMatch, (url) => {
-  //    it('should not have created remote for: ' + url, (done) => {
+  //    it('should not have created remote for: ' + url, () => {
   //      generateRemote(url, (err, remoteURL) => {
   //        expect(remoteURL).not.have.string(url)
   //        expect(remoteURL).be.empty
@@ -561,11 +551,11 @@ describe('buildcontrol', function () {
   //
   //
   //describe('push diff branches',  function() {
-  //  it('should push local:stage to stage:master and local:prod to prod:master', (done) => {
+  //  it('should push local:stage to stage:master and local:prod to prod:master', () => {
   //    return Promise.resolve()
   //
   //    .then(() => {
-  //      execScenario((err, stdout) => {
+  //      return execScenario(function (err, stdout, stderr, buildControls) {
   //        fs.removeSync('validate')  // not needed because there's two diff remotes
   //        next(err)
   //      })
@@ -580,7 +570,7 @@ describe('buildcontrol', function () {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
   //        expect(stdout).have.string('first stage commit')
   //        expect(stdout).have.string('new stage commit')
-  //        next()
+  //
   //      })
   //    })
   //
@@ -594,7 +584,7 @@ describe('buildcontrol', function () {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
   //        expect(stdout).have.string('first prod commit')
   //        expect(stdout).have.string('new prod commit')
-  //        next()
+  //
   //      })
   //    })
   //
@@ -602,22 +592,22 @@ describe('buildcontrol', function () {
   //  })
   //
   //
-  //  it('should do it multiple times', (done) => {
+  //  it('should do it multiple times', () => {
   //    this.timeout(30000)
   //
   //    return Promise.resolve()
   //
   //    .then(() => {
-  //      execScenario(next)
+  //      return execScenario(next)
   //    })
   //
   //    .then(() => {
   //      fs.writeFileSync('repo/dist/empty_file', 'file not empty anymore')
-  //      next()
+  //
   //    })
   //
   //    .then(() => {
-  //      execScenario(next)
+  //      return execScenario(next)
   //    })
   //
   //    .then(() => {
@@ -627,7 +617,7 @@ describe('buildcontrol', function () {
   //    .then(() => {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'stage_validate'}, (err, stdout) => {
   //        expect(stdout.match(/new stage commit/g)).be.length(2)
-  //        next()
+  //
   //      })
   //    })
   //
@@ -638,7 +628,7 @@ describe('buildcontrol', function () {
   //    .then(() => {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'prod_validate'}, (err, stdout) => {
   //        expect(stdout.match(/new prod commit/g)).be.length(2)
-  //        next()
+  //
   //      })
   //    })
   //
@@ -648,7 +638,7 @@ describe('buildcontrol', function () {
   //
   //
   //describe('git config',  function() {
-  //  it('should set git config variables properly', (done) => {
+  //  it('should set git config variables properly', () => {
   //    return Promise.resolve()
   //
   //    .then(() => {
@@ -656,7 +646,7 @@ describe('buildcontrol', function () {
   //    })
   //
   //    .then(() => {
-  //      execScenario(function (err, stdout, stderr, buildControls){
+  //      return execScenario(function (err, stdout, stderr, buildControls){
   //        expect(err).to.not.exist
   //        next(err)
   //      })
@@ -689,7 +679,7 @@ describe('buildcontrol', function () {
   //
   //
   //describe('deploy to named remote',  function() {
-  //  it('should have deployed to origin', (done) => {
+  //  it('should have deployed to origin', () => {
   //    return Promise.resolve()
   //
   //    .then(() => {
@@ -701,13 +691,13 @@ describe('buildcontrol', function () {
   //    })
   //
   //    .then(() => {
-  //      execScenario(next)
+  //      return execScenario(next)
   //    })
   //
   //    .then(() => {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
   //        expect(stdout).have.string('new grunt-build commit')
-  //        next()
+  //
   //      })
   //    })
   //
@@ -717,13 +707,13 @@ describe('buildcontrol', function () {
   //
   //
   //describe('force push',  function() {
-  //  beforeEach(function(done) => {
+  //  beforeEach(function() => {
   //    return Promise.resolve()
   //
   //    // initialize dist to be a repo and make a commit
   //    // this commit is a "bad" commit
   //    .then(() => {
-  //      execScenario(next)
+  //      return execScenario(next)
   //    })
   //
   //    // we set our dist repo to be one commit behind remote
@@ -743,14 +733,14 @@ describe('buildcontrol', function () {
   //  })
   //
   //
-  //  it('should force push', (done) => {
+  //  it('should force push', () => {
   //    return Promise.resolve()
   //
   //    // we're now going to push to the remote, since we've commited before
   //    // there will be nothing new to commit. This is just a push to remote
   //    // however, we're forcing remote to track the dist repo.
   //    .then(() => {
-  //      execScenario((err, stdout) => {
+  //      return execScenario(function (err, stdout, stderr, buildControls) {
   //        next(err)
   //      })
   //    })
@@ -761,7 +751,7 @@ describe('buildcontrol', function () {
   //      return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: 'validate'}, (err, stdout) => {
   //        expect(stdout).have.string('number 3 commit')
   //        expect(stdout).not.have.string('commit to be overwritten')
-  //        next()
+  //
   //      })
   //    })
   //

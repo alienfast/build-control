@@ -67,6 +67,9 @@ const BuildControl = class extends Base {
         pathname: remote.pathname
       })
 
+
+      console.log(`\n\n**********************\nurl: ${this.config.remote.repo}`)
+
       // configure sensitive information
       this.config.sensitive[`${this.config.remote.login}:${this.config.remote.token}`] = '<credentials>'
       this.config.sensitive[this.config.remote.token] = '<token>'
