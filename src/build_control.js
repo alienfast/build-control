@@ -9,7 +9,7 @@ import shelljs from 'shelljs'
 
 const Default = {
   branch: 'dist',     // The branch to commit to.
-  dir: 'dist',        // The directory that contains your built code.
+  cwd: 'dist',        // The directory that contains your built code.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
                       //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -54,7 +54,7 @@ const BuildControl = class extends Base {
       config
     ))
 
-    this.originalCwd = shelljs.pwd()
+    // modify
 
     // Build remote repo if sensitive information is passed in
     if (this.config.remote.login && this.config.remote.token) {
@@ -68,7 +68,9 @@ const BuildControl = class extends Base {
       })
     }
 
-    this.git = new Git({debug: false})
+    this.originalCwd = shelljs.pwd()
+    this.originalGit = new Git({cwd: this.originalCwd, debug: true})
+    this.git = new Git({cwd: this.config.cwd, debug: true})
     this.package = this.readPackage()
   }
 
@@ -124,13 +126,13 @@ const BuildControl = class extends Base {
     }
 
     // Check that build directory exists
-    if (!fs.existsSync(this.config.dir)) {
-      throw(`Build directory ${this.config.dir} doesn't exist. Nothing to version.`)
+    if (!fs.existsSync(this.config.cwd)) {
+      throw(`Build directory ${this.config.cwd} doesn't exist. Nothing to version.`)
     }
 
     // Check that build directory contains files
-    if (fs.readdirSync(this.config.dir).length === 0) {
-      throw(`Build directory ${this.config.dir} is empty. Nothing to version.`)
+    if (fs.readdirSync(this.config.cwd).length === 0) {
+      throw(`Build directory ${this.config.cwd} is empty. Nothing to version.`)
     }
 
     // If connectCommits is true check that the main project's working directory is clean
@@ -159,9 +161,9 @@ const BuildControl = class extends Base {
    * Initialize git repo if one doesn't exist
    */
   ensureGitInit() {
-    let repo = path.join(this.config.dir, '.git')
+    let repo = path.join(this.config.cwd, '.git')
     if (!fs.existsSync(repo)) {
-      //this.log(`Creating git repository in ${this.config.dir}.`)
+      //this.log(`Creating git repository in ${this.config.cwd}.`)
       this.git.init()
     }
   }
@@ -254,8 +256,8 @@ const BuildControl = class extends Base {
     let message = this.config.commit.template
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceTag%/g, this.config.tag.name())
-      .replace(/%sourceCommit%/g, this.git.sourceCommit())
-      .replace(/%sourceBranch%/g, this.git.sourceBranch())
+      .replace(/%sourceCommit%/g, this.originalGit.sourceCommit())
+      .replace(/%sourceBranch%/g, this.originalGit.sourceBranch())
 
     // If there are no changes, skip commit
     if (this.git.status()) {
@@ -304,14 +306,14 @@ const BuildControl = class extends Base {
     // Run task
     try {
 
-       this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.dir}...`)
+       this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.cwd}...`)
 
       // Prepare
       this.checkRequirements()
       if (this.config.remote.repo === '../') this.verifyRepoBranchIsTracked()
 
       // Change working directory
-      shelljs.cd(this.config.dir)
+      shelljs.cd(this.config.cwd)
 
       // Set up repository
       this.ensureGitInit()

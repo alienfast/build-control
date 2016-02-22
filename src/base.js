@@ -3,6 +3,8 @@ import stringify from 'stringify-object'
 import shelljs from 'shelljs'
 import chalk from 'chalk'
 import fancyLog from 'fancy-log'
+import pathIsAbsolute from 'path-is-absolute'
+import path from 'path'
 
 export const Default = {}
 
@@ -14,6 +16,12 @@ const Base = class {
    */
   constructor(config) {
     this.config = extend(true, {}, Default, config)
+
+    // get a fully resolved cwd
+    if(!pathIsAbsolute(this.config.cwd)){
+      this.config.cwd = path.join(shelljs.pwd(), this.config.cwd)
+    }
+
     this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
 
@@ -41,11 +49,18 @@ const Base = class {
    */
   exec(command, logResult = true, allowError = false) {
     this.debug(command)
+    let options = {silent: true}
+    if(this.config.cwd) {
+      options['cwd'] = this.config.cwd
+    }
+    else{
+      throw new Error('cwd is required')
+    }
 
-    let shellResult = shelljs.exec(command, {silent: true})
-    let output = shellResult.output
+    this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
+    let shellResult = shelljs.exec(command, options)
     if (shellResult.code === 0) {
-
+      let output = shellResult.output
       if (logResult && output != '') {
         this.log(output)
       }
@@ -56,7 +71,7 @@ const Base = class {
         return shellResult.code
       }
       else {
-        let msg = `Command failed \`${command}\`: ${shellResult.stderr}`
+        let msg = `Command failed \`${command}\`: ${shellResult.stderr}.  CWD: ${shelljs.pwd()}`
         this.error(msg)
         throw new Error(this.maskSensitive(msg))
       }

@@ -29,6 +29,7 @@
     "chalk": "^1.1.1",
     "crypto": "0.0.3",
     "fancy-log": "^1.2.0",
+    "path-is-absolute": "^1.0.0",
     "semver": "^5.1.0",
     "shelljs": "^0.6.0",
     "url": "^0.11.0"

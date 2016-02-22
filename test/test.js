@@ -195,7 +195,6 @@ describe('buildcontrol', function () {
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
-
       return Promise.resolve()
         .then(() => {
           return childProcessExec('git init', {cwd: 'repo'})

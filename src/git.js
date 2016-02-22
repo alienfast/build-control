@@ -21,11 +21,11 @@ const Git = class extends Base {
   }
 
   sourceBranch() {
-    return this.safeExec('git rev-parse --abbrev-ref HEAD', false).replace(/\n/g, '')
+    return this.exec('git rev-parse --abbrev-ref HEAD', false).replace(/\n/g, '')
   }
 
   sourceCommit() {
-    return this.safeExec('git rev-parse --short HEAD', false).replace(/\n/g, '')
+    return this.exec('git rev-parse --short HEAD', false).replace(/\n/g, '')
   }
 
   init() {
