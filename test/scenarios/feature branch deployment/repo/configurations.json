@@ -1,0 +1,13 @@
+[
+  {
+    "remote": {
+      "repo": "../../remote"
+    },
+    "branch": "master",
+
+    "connectCommits": false,
+    "commit": {
+      "template": "%sourceBranch%"
+    }
+  }
+]

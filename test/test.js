@@ -236,53 +236,53 @@ describe('buildcontrol', function () {
     })
   })
 
-  //describe('feature branch deployment',  function() {
-  //  it('should contain the correct sourceBranch name', (done) => {
-  //    let tasks = []
-  //
-  //    /**
-  //     * Test case specific setup
-  //     */
-  //    tasks.push(function git_init(next) {
-  //      childProcess.exec('git init', next)
-  //    })
-  //
-  //    tasks.push(function git_init(next) {
-  //      childProcess.exec('git checkout -b feature/numbers', next)
-  //    })
-  //
-  //    tasks.push(function git_add(next) {
-  //      childProcess.exec('git add .', next)
-  //    })
-  //
-  //    tasks.push(function git_commit(next) {
-  //      childProcess.exec('git commit -m "feature branch deployment"', next)
-  //    })
-  //
-  //    /**
-  //     * Execute scenario
-  //     */
-  //    tasks.push(function execute_scenario(next) {
-  //      execScenario((err) => {
-  //        expect(err).to.not.exist
-  //        next()
-  //      })
-  //    })
-  //
-  //    tasks.push(function verify_commit_message(next) {
-  //      childProcess.exec('git log -1 --pretty=%B', {cwd: 'validate'}, (err, stdout) => {
-  //        let commitMsg = stdout.replace(/\n/g, '')
-  //        expect(commitMsg).to.equal('feature/numbers')
-  //        next()
-  //      })
-  //    })
-  //
-  //    async.series(tasks, done)
-  //  })
-  //
-  //})
-  //
-  //
+  describe('feature branch deployment',  function() {
+    it('should contain the correct sourceBranch name', (done) => {
+      let tasks = []
+
+      /**
+       * Test case specific setup
+       */
+      tasks.push(function git_init(next) {
+        childProcess.exec('git init', next)
+      })
+
+      tasks.push(function git_init(next) {
+        childProcess.exec('git checkout -b feature/numbers', next)
+      })
+
+      tasks.push(function git_add(next) {
+        childProcess.exec('git add .', next)
+      })
+
+      tasks.push(function git_commit(next) {
+        childProcess.exec('git commit -m "feature branch deployment"', next)
+      })
+
+      /**
+       * Execute scenario
+       */
+      tasks.push(function execute_scenario(next) {
+        execScenario((err) => {
+          expect(err).to.not.exist
+          next()
+        })
+      })
+
+      tasks.push(function verify_commit_message(next) {
+        childProcess.exec('git log -1 --pretty=%B', {cwd: 'validate'}, (err, stdout) => {
+          let commitMsg = stdout.replace(/\n/g, '')
+          expect(commitMsg).to.equal('feature/numbers')
+          next()
+        })
+      })
+
+      async.series(tasks, done)
+    })
+
+  })
+
+
   //describe('merge multiple repos',  function() {
   //  this.timeout(30000)
   //

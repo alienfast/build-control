@@ -69,8 +69,8 @@ const BuildControl = class extends Base {
     }
 
     this.projectCwd = shelljs.pwd()
-    this.projectGit = new Git({cwd: this.projectCwd, debug: false})
-    this.git = new Git({cwd: this.config.cwd, debug: false})
+    this.projectGit = new Git({cwd: this.projectCwd, debug: this.config.debug})
+    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug})
     this.package = this.readPackage()
   }
 
@@ -107,8 +107,9 @@ const BuildControl = class extends Base {
   }
 
   readPackage() {
-    if (shelljs.test('-f', 'package.json', {silent: true})) {
-      return JSON.parse(fs.readFileSync('package.json', 'utf8'))
+    let file = path.join(this.projectCwd, 'package.json')
+    if (shelljs.test('-f', file, {silent: true})) {
+      return JSON.parse(fs.readFileSync(file, 'utf8'))
     }
     else {
       return null

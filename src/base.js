@@ -6,7 +6,9 @@ import fancyLog from 'fancy-log'
 import pathIsAbsolute from 'path-is-absolute'
 import path from 'path'
 
-export const Default = {}
+export const Default = {
+  debug: false
+}
 
 const Base = class {
 
