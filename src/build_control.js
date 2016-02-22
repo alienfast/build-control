@@ -167,7 +167,7 @@ const BuildControl = class extends Base {
   ensureGitInit() {
     let repo = path.join(this.config.cwd, '.git')
     if (!fs.existsSync(repo)) {
-      //this.log(`Creating git repository in ${this.config.cwd}.`)
+      this.log(`Creating git repository in ${this.config.cwd}.`)
       this.git.init()
     }
   }
@@ -187,10 +187,10 @@ const BuildControl = class extends Base {
   ensureRemote() {
     let remoteUrlRegex = new RegExp('[\/\\:]')
     if (remoteUrlRegex.test(this.config.remote.repo)) {
-      let remoteName = this.git.hash('remote', this.config.remote.repo)
-      if (!this.git.remote().includes(remoteName)) {
-        this.log(`Creating remote ${remoteName}`)
-        this.git.remoteAdd(remoteName, this.config.remote.repo)
+      this.config.remote.name = this.git.hash('remote', this.config.remote.repo)
+      if (!this.git.remote().includes(this.config.remote.name)) {
+        this.log(`Creating remote ${this.config.remote.name}`)
+        this.git.remoteAdd(this.config.remote.name, this.config.remote.repo)
       }
     }
   }
@@ -229,7 +229,7 @@ const BuildControl = class extends Base {
   fetch(dest) {
     let branch = this.resolveBranch() + (dest ? ':' + this.config.branch : '');
     this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote.repo}.`);
-    this.git.fetch(this.config.remote.repo, branch, this.config.fetch.shallow)
+    this.git.fetch(this.config.remote.name, branch, this.config.fetch.shallow)
   }
 
   /**
@@ -237,33 +237,39 @@ const BuildControl = class extends Base {
    */
   ensureLocalBranchTracksRemote() {
     let remoteBranch = this.config.remote.branch || this.config.branch;
-    if (this.git.branch(this.config.branch) !== this.config.remote.repo) {
-      this.git.branchRemote(this.config.branch, this.config.remote.repo, remoteBranch)
+    if (this.git.branch(this.config.branch) !== this.config.remote.name) {
+      this.git.branchRemote(this.config.branch, this.config.remote.name, remoteBranch)
     }
   }
 
   sourceName() {
-    if (this.name !== undefined) {
-      return this.name
+    if (this._sourceName) {
+      return this._sourceName
     }
     else {
       if (this.package != null) {
-        this.name = this.package.name
+        this._sourceName = this.package.name
       }
       else {
-        this.name = shelljs.pwd().split('/').pop()
+        this._sourceName = shelljs.pwd().split('/').pop()
       }
 
-      return this.name
+      return this._sourceName
     }
   }
 
   sourceCommit() {
-    return this.projectGit.sourceCommit()
+    if(this._sourceCommit){
+      return this._sourceCommit
+    }
+    return this._sourceCommit = this.projectGit.sourceCommit()
   }
 
   sourceBranch() {
-    return this.projectGit.sourceBranch()
+    if(this._sourceBranch){
+      return this._sourceBranch
+    }
+    return this._sourceBranch =  this.projectGit.sourceBranch()
   }
 
   /**
@@ -292,8 +298,8 @@ const BuildControl = class extends Base {
    */
   tagLocalBranch() {
     // If the tag exists, skip tagging
-    if (this.git.tagExists(this.tagName(), this.config.remote.repo)) {
-      this.log(`The tag "${this.tagName()}" already exists on remote. Skipping tagging.`)
+    if (this.git.tagExists(this.tagName(), this.config.remote.name)) {
+      this.log(`The tag "${this.tagName()}" already exists on ${this.config.remote.name}. Skipping tagging.`)
       return
     }
 
@@ -312,9 +318,9 @@ const BuildControl = class extends Base {
       branch += `:${this.config.remote.branch}`
     }
 
-    this.git.push(this.config.remote.repo, branch, this.config.force)
+    this.git.push(this.config.remote.name, branch, this.config.force)
     if (this.tagName()) {
-      this.git.pushTag(this.config.remote.repo, this.tagName())
+      this.git.pushTag(this.config.remote.name, this.tagName())
     }
   }
 
@@ -323,14 +329,14 @@ const BuildControl = class extends Base {
   }
 
   remoteBranchExists() {
-    return this.git.branchRemoteExists(this.resolveBranch(), this.config.remote.repo)
+    return this.git.branchRemoteExists(this.resolveBranch(), this.config.remote.name)
   }
 
   run() {
     // Run task
     try {
 
-      this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.cwd}...`)
+      this.log(`BuildControl starting ${this.sourceName()} for commit ${this.sourceCommit()} on branch ${this.sourceBranch()} using directory ${this.config.cwd}...`)
 
       // Prepare
       this.checkRequirements()
@@ -342,11 +348,11 @@ const BuildControl = class extends Base {
       this.ensureRemote()
 
       // Set up local branch
-      this.log(`\n\n**********************\nTHIS IS THE ISSUE`)
+      //this.log(`\n\n**********************\nTHIS IS THE ISSUE`)
       let localBranchExists = this.localBranchExists()
       let remoteBranchExists = this.remoteBranchExists()
-      this.log(`localBranchExists: ${localBranchExists}`)
-      this.log(`remoteBranchExists: ${remoteBranchExists}`)
+      //this.log(`localBranchExists: ${localBranchExists}`)
+      //this.log(`remoteBranchExists: ${remoteBranchExists}`)
 
       if (remoteBranchExists) {
         this.fetch()
@@ -363,7 +369,7 @@ const BuildControl = class extends Base {
       }
       else if (remoteBranchExists && !localBranchExists) { //// TEST THIS ONE
         // Create local branch that tracks remote
-        this.git.track(this.config.branch, this.config.remote.repo, this.resolveBranch())
+        this.git.track(this.config.branch, this.config.remote.name, this.resolveBranch())
       }
       else if (!remoteBranchExists && !localBranchExists) {
         // Create local branch

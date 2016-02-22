@@ -34,7 +34,9 @@ const Base = class {
   // protected
 
   codeExec(command, logResult = true) {
-    return this.exec(command, logResult, true)
+    let code = this.exec(command, logResult, true)
+    this.debug(`codeExec result: ${code}`)
+    return code
   }
 
   booleanExec(command) {
@@ -53,7 +55,6 @@ const Base = class {
    * @param returnCode - defaults to false which will throw Error on error, true will return result code
    */
   exec(command, logResult = true, returnCode = false) {
-    this.debug(command)
     let options = {silent: true}
     if (this.config.cwd) {
       options['cwd'] = this.config.cwd
@@ -65,7 +66,6 @@ const Base = class {
     this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
     let shellResult = shelljs.exec(command, options)
     if (shellResult.code === 0) {
-
 
       // ---
       // Log the result
