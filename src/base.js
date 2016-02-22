@@ -18,7 +18,7 @@ const Base = class {
     this.config = extend(true, {}, Default, config)
 
     // get a fully resolved cwd
-    if(!pathIsAbsolute(this.config.cwd)){
+    if (!pathIsAbsolute(this.config.cwd)) {
       this.config.cwd = path.join(shelljs.pwd(), this.config.cwd)
     }
 
@@ -50,10 +50,10 @@ const Base = class {
   exec(command, logResult = true, allowError = false) {
     this.debug(command)
     let options = {silent: true}
-    if(this.config.cwd) {
+    if (this.config.cwd) {
       options['cwd'] = this.config.cwd
     }
-    else{
+    else {
       throw new Error('cwd is required')
     }
 
@@ -61,8 +61,13 @@ const Base = class {
     let shellResult = shelljs.exec(command, options)
     if (shellResult.code === 0) {
       let output = shellResult.output
-      if (logResult && output != '') {
-        this.log(output)
+      if (output != '') {
+        if (logResult) {
+          this.log(output)
+        }
+        else {
+          this.debug(`[output] \n${output}`)
+        }
       }
       return output
     }

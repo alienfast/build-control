@@ -106,6 +106,8 @@ const Git = class extends Base {
    */
   status() {
     let result = this.safeExec('git status -sb --porcelain', false)
+
+    //this.log(`\n\nstatus result:\n${result}`)
     if (result === '') {
       return null
     }
