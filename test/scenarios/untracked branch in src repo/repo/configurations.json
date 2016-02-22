@@ -1,5 +1,6 @@
 [
   {
+    "WARNING!!!!!!!!!!!!!!!": "Any changes here have to be pushed to the remote in the scenarios dir because this is immediately wiped out and cloned.  git clone remote repo && cd repo.  make changes. git commit -m 'config'. now push our repo up to github (kind of meta, pushing a repo to a repo...)",
     "remote":{
       "repo": "../"
     },

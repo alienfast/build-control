@@ -216,7 +216,7 @@ describe('buildcontrol', function () {
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
 
-  /*
+
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
@@ -387,7 +387,7 @@ describe('buildcontrol', function () {
         })
     })
   })
-  */
+
 
   describe('untracked branch in src repo', function () {
     it('should track a branch in ../ if it was untracked', () => {
