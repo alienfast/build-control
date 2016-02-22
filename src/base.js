@@ -21,22 +21,16 @@ const Base = class {
   // protected
 
   booleanExec(command, logResult = true) {
-    try {
-      this.exec(command, logResult)
+    if (this.exec(command, logResult, true) == 0) {
       return true
     }
-    catch (error) {
+    else {
       return false
     }
   }
 
   safeExec(command, logResult = true) {
-    try {
-      return this.exec(command, logResult)
-    }
-    catch (error) {
-      return ''
-    }
+    return this.exec(command, logResult, true)
   }
 
   /**
@@ -45,25 +39,42 @@ const Base = class {
    * @param logResult - show output on the cli after execution, defaults to true
    * @param stream - stream the command, defaults to false
    */
-  exec(command, logResult = true) {
+  exec(command, logResult = true, allowError = false) {
     this.debug(command)
 
     let shellResult = shelljs.exec(command, {silent: true})
+    let output = shellResult.output
     if (shellResult.code === 0) {
 
-      let result = shellResult.output
-      if (logResult && result != '') {
-        this.log(result)
+      if (logResult && output != '') {
+        this.log(output)
       }
-      return result
+      return output
     }
     else {
-      throw new Error(this.maskSensitive(shellResult.output))
+      if (allowError) {
+        return shellResult.code
+      }
+      else {
+        let msg = `Command failed \`${command}\`: ${shellResult.stderr}`
+        this.error(msg)
+        throw new Error(this.maskSensitive(msg))
+      }
     }
   }
 
   log(msg) {
     fancyLog(this.maskSensitive(msg))
+  }
+
+  error(msg) {
+    this.log(`[${chalk.red('error')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
+  }
+
+  debug(msg) {
+    if (this.config.debug) {
+      this.log(`[${chalk.cyan('debug')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
+    }
   }
 
   maskSensitive(str) {
@@ -72,12 +83,6 @@ const Base = class {
     return str
       .replace(this.config.login + ':' + this.config.token, '<CREDENTIALS>', 'gm')
       .replace(this.config.token, '<TOKEN>', 'gmi')
-  }
-
-  debug(msg) {
-    if (this.config.debug) {
-      this.log(`[${chalk.cyan('debug')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
-    }
   }
 
   debugDump(msg, obj) {

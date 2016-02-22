@@ -258,7 +258,7 @@ const BuildControl = class extends Base {
       .replace(/%sourceBranch%/g, this.git.sourceBranch())
 
     // If there are no changes, skip commit
-    if (this.git.status() === '') {
+    if (this.git.status()) {
       this.log('No changes to your branch. Skipping commit.')
       return
     }
