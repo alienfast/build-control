@@ -11,8 +11,8 @@ import Promise from 'bluebird'
 import fancyLog from 'fancy-log'
 
 let expect = chai.expect
-let should = chai.should()
 
+let debug = true
 
 /**
  *  @callback scenarioCallback
@@ -69,6 +69,7 @@ let execScenario = (assertionCallback) => {
 
         // for each configuration, run an instance of BuildControl
         let configurationsPath = `${distDir}/*.json`
+        fancyLog(`\n\n\n------------------------------------------`)
         let files = glob.sync(configurationsPath, {realpath: true})
         if (!files || files.length <= 0) {
           throw new Error(`Unable to find any configurations at ${configurationsPath}`)
@@ -80,7 +81,7 @@ let execScenario = (assertionCallback) => {
         //capture the logs and verify the output
         let logs = ``
         for (let config of configurations) {
-          //config['debug'] = true
+          config['debug'] = debug
           let buildControl = new LogCaptureBuildControl(config)
           buildControls.push(buildControl)
           buildControl.run()
@@ -150,9 +151,9 @@ let childProcessExec = (command, options) => {
 
 let assertBuildControls = (buildControls, length) => {
   expect(buildControls).not.to.equal(null)
-  expect(buildControls).to.be.a('array');
+  expect(buildControls).to.be.a('array')
   expect(buildControls).to.have.length(length)
-  expect(buildControls[0]).to.be.a('object');
+  expect(buildControls[0]).to.be.a('object')
   return buildControls
 }
 
@@ -200,6 +201,7 @@ describe('buildcontrol', function () {
 
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
+
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
@@ -220,10 +222,10 @@ describe('buildcontrol', function () {
             expect(err).to.equal(null)
 
             let bc = assertBuildControls(buildControls, 1)[0]
-            expect(bc.sourceName()).to.equal('basic-deployment');
-            expect(bc.sourceCommit()).not.to.equal(null);
-            expect(bc.sourceBranch()).to.equal('master');
-            expect(bc.tagName()).to.equal('v0.0.1');
+            expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
+            expect(bc.sourceCommit()).not.to.equal(null)
+            expect(bc.sourceBranch()).to.equal('master')
+            expect(bc.tagName()).to.equal('v0.0.1')
 
             expect(stdout).to.contain('Initialized empty Git repository')
             expect(stdout).to.contain('Committing changes to "master".')
@@ -275,7 +277,9 @@ describe('buildcontrol', function () {
         .then(() => {
           return execScenario(function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
-            expect(err).to.not.exist
+            let bc = assertBuildControls(buildControls, 1)[0]
+            expect(bc.sourceName()).to.equal('repo') // from the parent dir name
+            expect(bc.tagName()).to.equal(false)
           })
         })
         .then(() => {
@@ -287,20 +291,23 @@ describe('buildcontrol', function () {
     })
   })
 
+  describe('merge multiple repos', function () {
 
-  //describe('merge multiple repos', function () {
-  //  this.timeout(30000)
-  //
-  //  it('merge multiple repos', (done) => {
-  //    execScenario(function (err, stdout, stderr, buildControls){
-  //      expect(err).to.not.exist
-  //      let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
-  //      expect(numberFile).be.eql('0 1 2\n')
-  //      done()
-  //    })
-  //  })
-  //
-  //})
+    it('merge multiple repos', (done) => {
+      execScenario(function (err, stdout, stderr, buildControls){
+        expect(err).to.equal(null)
+        let bc = assertBuildControls(buildControls, 2)[1]
+        expect(bc.sourceName()).to.equal('repo') // from the parent dir name
+        expect(bc.tagName()).to.equal(false)
+        expect(bc.remoteBranchExist()).to.equal(true)
+
+
+        let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
+        expect(numberFile).be.eql('0 1 2\n')
+        done()
+      })
+    })
+  })
 
 
   //describe('simple deploy',  function() {

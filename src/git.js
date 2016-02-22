@@ -95,20 +95,15 @@ const Git = class extends Base {
   }
 
   branchExists(branch) {
-    return this.booleanExec(`git show-ref --verify --quiet refs/heads/${branch}`, false)
+    return this.booleanExec(`git show-ref --verify --quiet refs/heads/${branch}`)
   }
 
   branchRemoteExists(branch, remoteName) {
-    return this.booleanExec(`git ls-remote --exit-code ${remoteName} ${branch}`, false)
+    return this.booleanExec(`git ls-remote --exit-code ${remoteName} ${branch}`)
   }
 
-  /**
-   *
-   */
   status() {
-    let result = this.safeExec('git status -sb --porcelain', false)
-
-    //this.log(`\n\nstatus result:\n${result}`)
+    let result = this.exec('git status -sb --porcelain', false)
     if (result === '') {
       return null
     }
@@ -139,7 +134,7 @@ const Git = class extends Base {
   }
 
   tagExists(tag, remoteName) {
-    return this.booleanExec(`git ls-remote --tags --exit-code ${remoteName} ${tag}`, false)
+    return this.booleanExec(`git ls-remote --tags --exit-code ${remoteName} ${tag}`)
   }
 
   push(remoteName, branch, force = false) {

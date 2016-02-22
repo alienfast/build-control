@@ -1,0 +1,30 @@
+[
+  {
+    "remote": {
+      "repo": "../../remote"
+    },
+    "connectCommits": false,
+    "branch": "master",
+
+
+    "cwd": "setup",
+    "commit": {
+      "template": "setup commit"
+    }
+  },
+
+
+  {
+    "remote": {
+      "repo": "../../remote"
+    },
+    "connectCommits": false,
+    "branch": "master",
+
+
+    "commit": {
+      "template": "test commit"
+    }
+  }
+
+]

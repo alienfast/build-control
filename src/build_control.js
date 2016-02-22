@@ -84,8 +84,11 @@ const BuildControl = class extends Base {
     else if (typeof this.config.tag.name === 'function') {
       return this.config.tag.name()
     }
+    else if (this.config.tag.name === undefined) {
+      return false
+    }
     else {
-      return this.config.tag.name()
+      return this.config.tag.name
     }
   }
 
@@ -197,9 +200,7 @@ const BuildControl = class extends Base {
    * @returns {boolean}
    */
   shouldUpdate() {
-    // Make sure you understand what this does.
-    // With force, we're not even going to attempt to check out
-    // We're just going to push the repo and override EVERYTHING in the remote
+    // WARNING: With force, we're not even going to attempt to check out, We're just going to push the repo and override EVERYTHING in the remote
     if (this.config.force === true) return false
 
     let status = this.git.status()
@@ -242,12 +243,27 @@ const BuildControl = class extends Base {
   }
 
   sourceName() {
-    if (this.package != null) {
-      return this.package.name
+    if (this.name !== undefined) {
+      return this.name
     }
     else {
-      return shelljs.pwd().split('/').pop()
+      if (this.package != null) {
+        this.name = this.package.name
+      }
+      else {
+        this.name = shelljs.pwd().split('/').pop()
+      }
+
+      return this.name
     }
+  }
+
+  sourceCommit() {
+    return this.projectGit.sourceCommit()
+  }
+
+  sourceBranch() {
+    return this.projectGit.sourceBranch()
   }
 
   /**
@@ -257,8 +273,8 @@ const BuildControl = class extends Base {
     let message = this.config.commit.template
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceTag%/g, this.config.tag.name())
-      .replace(/%sourceCommit%/g, this.projectGit.sourceCommit())
-      .replace(/%sourceBranch%/g, this.projectGit.sourceBranch())
+      .replace(/%sourceCommit%/g, this.sourceCommit())
+      .replace(/%sourceBranch%/g, this.sourceBranch())
 
     // If there are no changes, skip commit
     if (!this.git.status()) {
@@ -302,12 +318,19 @@ const BuildControl = class extends Base {
     }
   }
 
+  localBranchExists() {
+    return this.git.branchExists(this.config.branch)
+  }
+
+  remoteBranchExists() {
+    return this.git.branchRemoteExists(this.resolveBranch(), this.config.remote.repo)
+  }
 
   run() {
     // Run task
     try {
 
-       this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.cwd}...`)
+      this.log(`BuildControl starting ${this.sourceName()} build in directory ${this.config.cwd}...`)
 
       // Prepare
       this.checkRequirements()
@@ -319,8 +342,11 @@ const BuildControl = class extends Base {
       this.ensureRemote()
 
       // Set up local branch
-      let localBranchExists = this.git.branchExists(this.config.branch)
-      let remoteBranchExists = this.git.branchRemoteExists(this.resolveBranch(), this.config.remote.repo)
+      this.log(`\n\n**********************\nTHIS IS THE ISSUE`)
+      let localBranchExists = this.localBranchExists()
+      let remoteBranchExists = this.remoteBranchExists()
+      this.log(`localBranchExists: ${localBranchExists}`)
+      this.log(`remoteBranchExists: ${remoteBranchExists}`)
 
       if (remoteBranchExists) {
         this.fetch()

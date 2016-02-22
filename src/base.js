@@ -33,8 +33,12 @@ const Base = class {
   // ----------------------------------------------
   // protected
 
-  booleanExec(command, logResult = true) {
-    if (this.exec(command, logResult, true) == 0) {
+  codeExec(command, logResult = true) {
+    return this.exec(command, logResult, true)
+  }
+
+  booleanExec(command) {
+    if (this.codeExec(command, false) == 0) {
       return true
     }
     else {
@@ -42,17 +46,13 @@ const Base = class {
     }
   }
 
-  safeExec(command, logResult = true) {
-    return this.exec(command, logResult, true)
-  }
-
   /**
    * Wraps shellJs calls that act on the file structure to give better output and error handling
    * @param command
-   * @param logResult - show output on the cli after execution, defaults to true
-   * @param stream - stream the command, defaults to false
+   * @param logResult - return output from the execution, defaults to true. If false, will return code instead
+   * @param returnCode - defaults to false which will throw Error on error, true will return result code
    */
-  exec(command, logResult = true, allowError = false) {
+  exec(command, logResult = true, returnCode = false) {
     this.debug(command)
     let options = {silent: true}
     if (this.config.cwd) {
@@ -66,6 +66,9 @@ const Base = class {
     let shellResult = shelljs.exec(command, options)
     if (shellResult.code === 0) {
 
+
+      // ---
+      // Log the result
       // strangely enough, sometimes useful messages from git are an stderr even when it is a successful command with a 0 result code
       let output = shellResult.stdout
       if (output == '') {
@@ -73,7 +76,6 @@ const Base = class {
       }
 
       //this.log(stringify(shellResult))
-
       if (output != '') {
         if (logResult) {
           this.log(output)
@@ -82,10 +84,18 @@ const Base = class {
           this.debug(`[output] \n${output}`)
         }
       }
-      return output
+
+      // ---
+      // determine the return value
+      if(returnCode){
+        return shellResult.code
+      }
+      else {
+        return output
+      }
     }
     else {
-      if (allowError) {
+      if (returnCode) {
         return shellResult.code
       }
       else {
