@@ -313,9 +313,6 @@ const BuildControl = class extends Base {
       this.checkRequirements()
       if (this.config.remote.repo === '../') this.verifyRepoBranchIsTracked()
 
-      // Change working directory
-      shelljs.cd(this.config.cwd)
-
       // Set up repository
       this.ensureGitInit()
       this.configureGit()
@@ -366,10 +363,6 @@ const BuildControl = class extends Base {
     }
     catch (e) {
       throw e
-    }
-    finally {
-      // Revert working directory
-      shelljs.cd(this.projectCwd)
     }
   }
 }

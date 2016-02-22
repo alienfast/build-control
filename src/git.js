@@ -3,6 +3,7 @@ import extend from 'extend'
 import fs from 'fs'
 import crypto from 'crypto'
 import shelljs from 'shelljs'
+import path from 'path'
 
 const Default = {}
 
@@ -126,9 +127,8 @@ const Git = class extends Base {
 
   commit(message) {
     // generate commit message
-    let commitMessageFile = this.hash('commitMessageFile', message)
+    let commitMessageFile = path.join(this.config.cwd, this.hash('commitMessageFile', message))
     fs.writeFileSync(commitMessageFile, message)
-
     this.exec(`git commit --file=${commitMessageFile}`)
 
     fs.unlinkSync(commitMessageFile)
