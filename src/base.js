@@ -7,7 +7,7 @@ import pathIsAbsolute from 'path-is-absolute'
 import path from 'path'
 
 export const Default = {
-  debug: false
+  debug: true
 }
 
 const Base = class {
@@ -24,7 +24,10 @@ const Base = class {
       this.config.cwd = path.join(shelljs.pwd(), this.config.cwd)
     }
 
-    this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
+    // hack - tests override #log and we need to complete construction before logging
+    setTimeout(() => {
+      this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
+    }, 1)
   }
 
   // ----------------------------------------------
