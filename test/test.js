@@ -415,31 +415,31 @@ describe('buildcontrol', function () {
         })
     })
 
-    //it('should not set tracking info it branch already exists', () => {
-    //  return Promise.resolve()
-    //    .then(() => {
-    //      fs.removeSync('repo')
-    //      return childProcessExec('git clone remote repo')
-    //    })
-    //
-    //    .then(() => {
-    //      return childProcessExec('git branch build', {cwd: 'repo'})
-    //    })
-    //    .then(() => {
-    //      fs.ensureDirSync('repo/build')
-    //      fs.writeFileSync('repo/build/hello.txt', 'hello world!')
-    //    })
-    //    .then(() => {
-    //      return execScenario(function (err, stdout, stderr, buildControls) {
-    //
-    //      })
-    //    })
-    //    .then(() => {
-    //      return childProcessExec('git branch -lvv', {cwd: 'repo'}).then((results) => {
-    //        expect(result.stdout).not.to.contain('origin/build')
-    //      })
-    //    })
-    //})
+    it('should not set tracking info it branch already exists', () => {
+      return Promise.resolve()
+        .then(() => {
+          fs.removeSync('repo')
+          return childProcessExec('git clone remote repo')
+        })
+
+        .then(() => {
+          return childProcessExec('git branch build', {cwd: 'repo'})
+        })
+        .then(() => {
+          fs.ensureDirSync('repo/build')
+          fs.writeFileSync('repo/build/hello.txt', 'hello world!')
+        })
+        .then(() => {
+          return execScenario(function (err, stdout, stderr, buildControls) {
+
+          })
+        })
+        .then(() => {
+          return childProcessExec('git branch -lvv', {cwd: 'repo'}).then((results) => {
+            expect(result.stdout).not.to.contain('origin/build')
+          })
+        })
+    })
   })
 
   //
