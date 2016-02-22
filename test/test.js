@@ -209,17 +209,11 @@ describe('buildcontrol', function () {
         // verify output from grunt
         .then(() => {
           return execScenario(function (err, stdout, stderr) {
-
-            //fancyLog(`*******************************Callback`)
-            //fancyLog(`err: ${err}`)
-            //fancyLog(`stderr: ${stderr}`)
-            //fancyLog(`stdout: \n\n\n\n\n${stdout}\n\n\n\n`)
             expect(err).to.equal(null)
             expect(stdout).to.contain('Initialized empty Git repository')
             expect(stdout).to.contain('Committing changes to "master".')
-            expect(stdout).to.match(/Built basic-deployment v0\.0\.1 from commit \w+ on branch master/g) // FIXME commit null?
+            expect(stdout).to.match(/Built basic-deployment v0\.0\.1 from commit \w+ on branch master/g)
             expect(stdout).to.contain('Pushing master to ../../remote')
-            //fancyLog(`*******************************`)
           })
         })
 

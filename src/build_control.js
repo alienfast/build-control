@@ -68,9 +68,9 @@ const BuildControl = class extends Base {
       })
     }
 
-    this.originalCwd = shelljs.pwd()
-    this.originalGit = new Git({cwd: this.originalCwd, debug: true})
-    this.git = new Git({cwd: this.config.cwd, debug: true})
+    this.projectCwd = shelljs.pwd()
+    this.projectGit = new Git({cwd: this.projectCwd, debug: false})
+    this.git = new Git({cwd: this.config.cwd, debug: false})
     this.package = this.readPackage()
   }
 
@@ -256,8 +256,8 @@ const BuildControl = class extends Base {
     let message = this.config.commit.template
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceTag%/g, this.config.tag.name())
-      .replace(/%sourceCommit%/g, this.originalGit.sourceCommit())
-      .replace(/%sourceBranch%/g, this.originalGit.sourceBranch())
+      .replace(/%sourceCommit%/g, this.projectGit.sourceCommit())
+      .replace(/%sourceBranch%/g, this.projectGit.sourceBranch())
 
     // If there are no changes, skip commit
     if (!this.git.status()) {
@@ -368,7 +368,7 @@ const BuildControl = class extends Base {
     }
     finally {
       // Revert working directory
-      shelljs.cd(this.originalCwd)
+      shelljs.cd(this.projectCwd)
     }
   }
 }
