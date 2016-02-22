@@ -1,0 +1,8 @@
+[
+  {
+    "remote":{
+      "repo": "../../remote"
+    },
+    "branch": "master"
+  }
+]

@@ -7,7 +7,8 @@ import pathIsAbsolute from 'path-is-absolute'
 import path from 'path'
 
 export const Default = {
-  debug: false
+  debug: false,
+  sensitive: {}
 }
 
 const Base = class {
@@ -124,11 +125,11 @@ const Base = class {
   }
 
   maskSensitive(str) {
-    if (!this.config.token) return str
-
-    return str
-      .replace(this.config.login + ':' + this.config.token, '<CREDENTIALS>', 'gm')
-      .replace(this.config.token, '<TOKEN>', 'gmi')
+    let result = str
+    for(let key of Object.keys(this.config.sensitive)){
+      result = result.replace(key, this.config.sensitive[key], 'gmi')
+    }
+    return result
   }
 
   debugDump(msg, obj) {

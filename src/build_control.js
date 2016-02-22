@@ -42,7 +42,7 @@ const Default = {
   git: {
     config: {}         // [git config](http://git-scm.com/docs/git-config) settings for the repository when preparing the repository. e.g. `{'user.name': 'John Doe'}`
   },
-  force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
+  force: false,     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
 const BuildControl = class extends Base {
@@ -58,7 +58,7 @@ const BuildControl = class extends Base {
 
     // Build remote repo if sensitive information is passed in
     if (this.config.remote.login && this.config.remote.token) {
-      let remote = url.parse(this.config.remote)
+      let remote = url.parse(this.config.remote.repo)
 
       this.config.remote.repo = url.format({
         protocol: remote.protocol,
@@ -66,11 +66,16 @@ const BuildControl = class extends Base {
         host: remote.host,
         pathname: remote.pathname
       })
+
+      // configure sensitive information
+      this.config.sensitive[`${this.config.remote.login}:${this.config.remote.token}`] = '<credentials>'
+      this.config.sensitive[this.config.remote.token] = '<token>'
     }
 
+
     this.projectCwd = shelljs.pwd()
-    this.projectGit = new Git({cwd: this.projectCwd, debug: this.config.debug})
-    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug})
+    this.projectGit = new Git({cwd: this.projectCwd, debug: this.config.debug, sensitive: this.config.sensitive})
+    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.package = this.readPackage()
   }
 
@@ -261,17 +266,17 @@ const BuildControl = class extends Base {
   }
 
   sourceCommit() {
-    if(this._sourceCommit){
+    if (this._sourceCommit) {
       return this._sourceCommit
     }
     return this._sourceCommit = this.projectGit.sourceCommit()
   }
 
   sourceBranch() {
-    if(this._sourceBranch){
+    if (this._sourceBranch) {
       return this._sourceBranch
     }
-    return this._sourceBranch =  this.projectGit.sourceBranch()
+    return this._sourceBranch = this.projectGit.sourceBranch()
   }
 
   /**
