@@ -87,7 +87,7 @@ const Base = class {
   }
 
   logShellOutput(shellResult, logResult) {
-    this.debug(`[exit code] ${shellResult.code}`)
+    //this.debug(`[exit code] ${shellResult.code}`)
 
     // ---
     // Log the result

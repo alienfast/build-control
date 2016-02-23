@@ -13,7 +13,7 @@ import stringify from 'stringify-object'
 import extend from 'extend'
 
 let expect = chai.expect
-let debug = true
+let debug = false
 
 
 /**
@@ -51,30 +51,56 @@ const PATH_MOCK_REPO_DIST = path.join(PATH_MOCK_REPO, 'dist')
 describe('BuildControl', function () {
   this.timeout(20000)
 
-  it('should correctly resolve configurations and package', () => {
-    // the current working directory is `test/mock/
-    return Promise.resolve()
-      .then(() => {
-        let scenarioCwd = path.join(scenarioPath('basic deployment'), 'repo')
-        let configurations = [
-          {
+  describe('basics', function () {
+    // WARNING: we are looking direct at the scenario fixture here, DO NOT #run()
+    it('should resolve from package.json', () => {
+      // the current working directory is `test/mock/
+      return Promise.resolve()
+        .then(() => {
+          let scenarioCwd = path.join(scenarioPath('basic deployment'), 'repo')
+          let configurations = [{
             sourceCwd: scenarioCwd,
             remote: {
               repo: "../../remote"
             },
             branch: "master"
-          }
-        ]
+          }]
 
-        // NOTE: we are looking direct at the fixture here, DO NOT #run()
-        let buildControls = buildConfigurations(configurations, false)
-        let bc = assertBuildControls(buildControls, 1)[0]
-        expect(bc.config.sourceCwd).to.equal(scenarioCwd)
-        expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
-        expect(bc.sourceCommit()).not.to.equal(null)
-        expect(bc.sourceBranch()).to.equal('master')
-        expect(bc.tagName()).to.equal('v0.0.1')
-      })
+          let buildControls = buildConfigurations(configurations, false)
+          let bc = assertBuildControls(buildControls, 1)[0]
+          expect(bc.config.sourceCwd).to.equal(scenarioCwd)
+          expect(bc.config.cwd).to.equal(path.join(scenarioCwd, 'dist'))
+          expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
+          expect(bc.sourceCommit()).not.to.equal(null)
+          expect(bc.sourceBranch()).to.equal('master')
+          expect(bc.tagName()).to.equal('v0.0.1')
+        })
+    })
+
+    it('should resolve from directory', () => {
+      // the current working directory is `test/mock/
+      return Promise.resolve()
+        .then(() => {
+          let scenarioCwd = path.join(scenarioPath('connect commits'), 'repo')
+          let configurations = [{
+            sourceCwd: scenarioCwd,
+            cwd: 'build',
+            branch: 'build',
+            remote: {repo: '../'},
+            connectCommits: true
+          }]
+
+          // NOTE: we are looking direct at the fixture here, DO NOT #run()
+          let buildControls = buildConfigurations(configurations, false)
+          let bc = assertBuildControls(buildControls, 1)[0]
+          expect(bc.config.sourceCwd).to.equal(scenarioCwd)
+          expect(bc.config.cwd).to.equal(path.join(scenarioCwd, 'build'))
+          expect(bc.sourceName()).to.equal('repo')
+          expect(bc.sourceCommit()).not.to.equal(null)
+          expect(bc.sourceBranch()).to.equal('master')
+          expect(bc.tagName()).to.equal(false)
+        })
+    })
   })
 
   describe('scenarios', function () {
@@ -240,7 +266,7 @@ describe('BuildControl', function () {
           expect(bc.tagName()).to.equal(false)
           //expect(bc.remoteBranchExist()).to.equal(true)
 
-          let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+          let numberFile = fs.readFileSync(path.join(PATH_MOCK_VALIDATE, 'numbers.txt'), {encoding: 'utf8'})
           expect(numberFile).be.eql('0 1 2\n')
         })
       })
@@ -268,19 +294,19 @@ describe('BuildControl', function () {
               expect(err).to.equal(null)
               let bc = assertBuildControls(buildControls, 1)[0]
 
-              let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+              let numberFile = fs.readFileSync(path.join(PATH_MOCK_VALIDATE, 'numbers.txt'), {encoding: 'utf8'})
               expect(numberFile).be.eql('1 2 3 4\n')
             })
           })
 
           .then(() => {
-            fs.writeFileSync('repo/dist/numbers.txt', '100 200', {cwd: PATH_MOCK})
+            fs.writeFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), '100 200')
 
             return execScenario(configurations, function (err, stdout, stderr, buildControls) {
               expect(err).to.equal(null)
               let bc = assertBuildControls(buildControls, 1)[0]
 
-              let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+              let numberFile = fs.readFileSync(path.join(PATH_MOCK_VALIDATE, 'numbers.txt'), {encoding: 'utf8'})
               expect(numberFile).be.eql('100 200')
             })
           })
@@ -354,8 +380,8 @@ describe('BuildControl', function () {
             return childProcessExec('git clone remote repo', {cwd: PATH_MOCK})
           })
           .then(() => {
-            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-            fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
+            fs.ensureDirSync(path.join(PATH_MOCK_REPO, 'build'))
+            fs.writeFileSync(path.join(PATH_MOCK_REPO, 'build/hello.txt'), 'hello world!')
           })
           .then(() => {
             return execScenario(configurations, function (err, stdout, stderr, buildControls) {
@@ -382,8 +408,8 @@ describe('BuildControl', function () {
             return childProcessExec('git branch build', {cwd: PATH_MOCK_REPO})
           })
           .then(() => {
-            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-            fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
+            fs.ensureDirSync(path.join(PATH_MOCK_REPO, 'build'))
+            fs.writeFileSync(path.join(PATH_MOCK_REPO, 'build/hello.txt'), 'hello world!')
           })
           .then(() => {
             return execScenario(configurations, function (err, stdout, stderr, buildControls) {
@@ -552,7 +578,7 @@ describe('BuildControl', function () {
             return execScenario(configurations)
           })
           .then(() => {
-            fs.writeFileSync('repo/dist/empty_file', 'file not empty anymore', {cwd: PATH_MOCK})
+            fs.writeFileSync(path.join(PATH_MOCK_REPO_DIST, 'empty_file'), 'file not empty anymore')
           })
           .then(() => {
             return execScenario(configurations)
@@ -661,49 +687,61 @@ describe('BuildControl', function () {
 
     describe('force push', function () {
 
+      let overrwrittenMessage = '(this commit should not appear in the final log)'
       let configurations = [{
         remote: {repo: '../../remote'},
         connectCommits: false,
         force: true,
         branch: 'master',
-        commit: {template: 'commit to be overwritten'}
+        commit: {template: `1st commit ${overrwrittenMessage}`}
       }]
 
-      beforeEach(() => {
+      it('should force push', () => {
         return Promise.resolve()
           .then(() => {
-            // initialize dist to be a repo and make a commit, this commit is a "bad" commit
+            // initialize dist to be a repo and make a commit, this commit is a "bad" commit with the '6 7 8 9' numbers.txt
             return execScenario(configurations)
+          })
+          .then(() => {
+            // sanity check, make sure our reset worked
+            let numberFile = fs.readFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), {encoding: 'utf8'})
+            expect(numberFile).be.eql('6 7 8 9\n')
           })
           .then(() => {
             // we set our dist repo to be one commit behind remote
             return childProcessExec('git reset --hard HEAD^ ', {cwd: PATH_MOCK_REPO_DIST})
+              .then(() => {
+                // sanity check, make sure our reset worked
+                let numberFile = fs.readFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), {encoding: 'utf8'})
+                expect(numberFile).be.eql('1 2 3 4\n')
+              })
           })
           .then(() => {
             // now we'll go and diverge, remember we're 1 behind, 1 ahead
-            fs.writeFileSync('repo/dist/numbers.txt', '9 9 9 9', {cwd: PATH_MOCK})
-            return gitCommit("number 3 commit", 'repo/dist', {cwd: PATH_MOCK})
+            fs.writeFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), '9 9 9 9\n')
+            gitAdd(PATH_MOCK_REPO_DIST)
+            return gitCommit("3rd commit", PATH_MOCK_REPO_DIST)
           })
-      })
-
-
-      it('should force push', () => {
-        return Promise.resolve()
-          // We're now going to push to the remote, since we've committed before
-          // there will be nothing new to commit. This is just a push to remote
-          // however, we're forcing remote to track the dist repo.
           .then(() => {
-            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            })
+            // sanity check
+            let numberFile = fs.readFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), {encoding: 'utf8'})
+            expect(numberFile).be.eql('9 9 9 9\n')
           })
-
-          // the dist repo has 2 commits, namely "number 3 commit"
-          // and it should not have the old commit "commit to be overwritten"
           .then(() => {
-            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE}).then((results) => {
-              expect(results.stdout).to.contain('number 3 commit')
-              expect(results.stdout).not.to.contain('commit to be overwritten')
-            })
+            // We're now going to push to the remote, since we've committed before
+            // there will be nothing new to commit. This is just a push to remote
+            // however, we're forcing remote to track the dist repo.
+            configurations[0].commit.template = `2nd commit ${overrwrittenMessage} (data should be unchanged from 1st commit)`
+            return execScenario(configurations)
+          })
+          .then(() => {
+            // the dist repo has 2 commits, namely "3rd commit"
+            // and it should not have the old commit "intentional bad commit ${overrwrittenMessage}"
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE})
+              .then((results) => {
+                expect(results.stdout).to.contain('3rd commit')
+                expect(results.stdout).not.to.contain(overrwrittenMessage)
+              })
           })
       })
     })
@@ -723,18 +761,18 @@ describe('BuildControl', function () {
             return gitInit()
           })
           .then(() => {
-            fs.writeFileSync('repo/file.txt', 'brand file contents.\n', {cwd: PATH_MOCK})
+            fs.writeFileSync(path.join(PATH_MOCK_REPO, 'file.txt'), 'brand file contents.\n')
             return gitAdd()
           })
           .then(() => {
             return gitCommit("first commit")
           })
           .then(() => {
-            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-            fs.writeFileSync('repo/build/hello.txt', 'hello world!\n', {cwd: PATH_MOCK})
+            fs.ensureDirSync(path.join(PATH_MOCK_REPO, 'build'))
+            fs.writeFileSync(path.join(PATH_MOCK_REPO, 'build/hello.txt'), 'hello world!\n')
 
             // pretend there was some unchanged files
-            fs.writeFileSync('repo/file.txt', 'more content added.\n', {cwd: PATH_MOCK})
+            fs.writeFileSync(path.join(PATH_MOCK_REPO, 'file.txt'), 'more content added.\n')
             return execScenario(configurations, function (err, stdout, stderr, buildControls) {
               expect(err).to.equal(null)
               expect(stdout).to.contain('more content added.')
@@ -866,7 +904,7 @@ const LogCaptureBuildControl = class extends BuildControl {
 
 const childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
-    fancyLog(`test: ${command}`)
+    fancyLog(`[test.js]: ${command} in cwd: ${options.cwd}`)
     return childProcess.exec(command, options, function (err, stdout, stderr, buildControls) {
       return resolve({
         error: err,
@@ -886,20 +924,30 @@ const assertBuildControls = (buildControls, length) => {
 }
 
 const gitInit = (cwd = PATH_MOCK_REPO) => {
-  return childProcessExec('git init', {cwd: cwd})
+  return childProcessExec('git init', {cwd: cwd}).then(logOutput)
 }
 
 const gitAdd = (cwd = PATH_MOCK_REPO) => {
-  return childProcessExec('git add .', {cwd: cwd})
+  return childProcessExec('git add .', {cwd: cwd}).then(logOutput)
 }
 
 const gitCommit = (msg, cwd = PATH_MOCK_REPO) => {
-  return childProcessExec(`git commit -m "${msg}"`, {cwd: cwd})
+  return childProcessExec(`git commit -m "${msg}"`, {cwd: cwd}).then(logOutput)
 }
 
 const scenarioPath = (name) => {
   return path.join(__dirname, `scenarios/${name}`)
 }
 
-
+const logOutput = (results) => {
+  if (results.err) {
+    fancyLog(`[test.js][err] ${results.err}`)
+  }
+  if (results.stdout) {
+    fancyLog(`[test.js][stdout] ${results.stdout}`)
+  }
+  if (results.stderr) {
+    fancyLog(`[test.js][stderr] ${results.stderr}`)
+  }
+}
 

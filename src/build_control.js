@@ -267,7 +267,7 @@ const BuildControl = class extends Base {
         this._sourceName = this.package.name
       }
       else {
-        this._sourceName = this.sourceCwd.split('/').pop()
+        this._sourceName = this.config.sourceCwd.split('/').pop()
       }
 
       return this._sourceName
