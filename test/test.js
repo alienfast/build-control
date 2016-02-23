@@ -216,7 +216,6 @@ describe('buildcontrol', function () {
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
 
-
   describe('basic deployment', function () {
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
@@ -388,7 +387,6 @@ describe('buildcontrol', function () {
     })
   })
 
-
   describe('untracked branch in src repo', function () {
     it('should track a branch in ../ if it was untracked', () => {
       return Promise.resolve()
@@ -415,13 +413,12 @@ describe('buildcontrol', function () {
         })
     })
 
-    it('should not set tracking info it branch already exists', () => {
+    it('should not set tracking info if branch already exists', () => {
       return Promise.resolve()
         .then(() => {
           fs.removeSync('repo')
           return childProcessExec('git clone remote repo')
         })
-
         .then(() => {
           return childProcessExec('git branch build', {cwd: 'repo'})
         })
@@ -436,7 +433,7 @@ describe('buildcontrol', function () {
         })
         .then(() => {
           return childProcessExec('git branch -lvv', {cwd: 'repo'}).then((results) => {
-            expect(result.stdout).not.to.contain('origin/build')
+            expect(results.stdout).not.to.contain('origin/build')
           })
         })
     })
