@@ -42,7 +42,7 @@ const Default = {
   git: {
     config: {}         // [git config](http://git-scm.com/docs/git-config) settings for the repository when preparing the repository. e.g. `{'user.name': 'John Doe'}`
   },
-  force: false,     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
+  force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
 const BuildControl = class extends Base {
@@ -67,14 +67,10 @@ const BuildControl = class extends Base {
         pathname: remote.pathname
       })
 
-
-      console.log(`\n\n**********************\nurl: ${this.config.remote.repo}`)
-
       // configure sensitive information
       this.config.sensitive[`${this.config.remote.login}:${this.config.remote.token}`] = '<credentials>'
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
-
 
     this.sourceCwd = shelljs.pwd()
     this.sourceGit = new Git({cwd: this.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})

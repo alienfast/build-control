@@ -2,7 +2,6 @@ import Base from './base'
 import extend from 'extend'
 import fs from 'fs'
 import crypto from 'crypto'
-import shelljs from 'shelljs'
 import path from 'path'
 
 const Default = {}
