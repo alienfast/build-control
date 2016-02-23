@@ -7,7 +7,6 @@ import path from 'path'
 import url from 'url'
 import semver from 'semver'
 import shelljs from 'shelljs'
-import pathIsAbsolute from 'path-is-absolute'
 
 const Default = {
   sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)

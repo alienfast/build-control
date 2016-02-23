@@ -3,7 +3,6 @@ import stringify from 'stringify-object'
 import shelljs from 'shelljs'
 import chalk from 'chalk'
 import fancyLog from 'fancy-log'
-import path from 'path'
 
 export const Default = {
   debug: false,
