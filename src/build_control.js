@@ -1,15 +1,18 @@
 import Base from './base'
 import Git from './git'
+import Paths from './paths'
 import extend from 'extend'
 import fs from 'fs'
 import path from 'path'
 import url from 'url'
 import semver from 'semver'
 import shelljs from 'shelljs'
+import pathIsAbsolute from 'path-is-absolute'
 
 const Default = {
-  branch: 'dist',     // The branch to commit to.
+  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
   cwd: 'dist',        // The directory that contains your built code.
+  branch: 'dist',     // The branch to commit to.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
                       //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -72,8 +75,12 @@ const BuildControl = class extends Base {
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
 
-    this.sourceCwd = shelljs.pwd()
-    this.sourceGit = new Git({cwd: this.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
+    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
+    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
+    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
+    this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
+
+    this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.package = this.readPackage()
   }
@@ -114,11 +121,13 @@ const BuildControl = class extends Base {
   }
 
   readPackage() {
-    let file = path.join(this.sourceCwd, 'package.json')
+    let file = path.join(this.config.sourceCwd, 'package.json')
     if (shelljs.test('-f', file, {silent: true})) {
+      this.debug(`Found package.json at ${file}`)
       return JSON.parse(fs.readFileSync(file, 'utf8'))
     }
     else {
+      this.debug(`package.json not found at ${file}`)
       return null
     }
   }
@@ -258,7 +267,7 @@ const BuildControl = class extends Base {
         this._sourceName = this.package.name
       }
       else {
-        this._sourceName = shelljs.pwd().split('/').pop()
+        this._sourceName = this.sourceCwd.split('/').pop()
       }
 
       return this._sourceName

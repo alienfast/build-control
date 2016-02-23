@@ -19,6 +19,6 @@ let recipes = [
 // FIXME eat our own dogfood and use BuildControl to produce our own builds!
 
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
-new TaskSeries(gulp, 'default', recipes, {debug: true})
+new TaskSeries(gulp, 'default', recipes, {debug: false})
 new TaskSeries(gulp, 'rollup', rollup)
 

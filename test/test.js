@@ -1,4 +1,5 @@
 import BuildControl from '../src/build_control'
+import Paths from '../src/paths'
 import chai from 'chai'
 import glob from 'glob'
 import path from 'path'
@@ -12,7 +13,7 @@ import stringify from 'stringify-object'
 import extend from 'extend'
 
 let expect = chai.expect
-let debug = false
+let debug = true
 
 
 /**
@@ -30,18 +31,755 @@ let debug = false
  *
  * @param {scenarioCallback} assertionCallback - The callback that handles the response
  */
-
-
 const PATH_MOCK = path.join(__dirname, 'mock')
 const PATH_MOCK_REPO = path.join(PATH_MOCK, 'repo')
 const PATH_MOCK_VALIDATE = path.join(PATH_MOCK, 'validate')
 const PATH_MOCK_REMOTE = path.join(PATH_MOCK, 'remote')
 const PATH_MOCK_REPO_DIST = path.join(PATH_MOCK_REPO, 'dist')
 
+
+/**
+ * Tests
+ *
+ * Each test is using the perspective as a "user", take a look at the "basic deploy" suite.
+ *
+ * `describe` suite's title should have the same name as the scenario folder.
+ *
+ * Assumptions:
+ *    - each tests' current working directory has been set to `test/mock`
+ */
+describe('BuildControl', function () {
+  this.timeout(20000)
+
+  it('should correctly resolve configurations and package', () => {
+    // the current working directory is `test/mock/
+    return Promise.resolve()
+      .then(() => {
+        let scenarioCwd = path.join(scenarioPath('basic deployment'), 'repo')
+        let configurations = [
+          {
+            sourceCwd: scenarioCwd,
+            remote: {
+              repo: "../../remote"
+            },
+            branch: "master"
+          }
+        ]
+
+        // NOTE: we are looking direct at the fixture here, DO NOT #run()
+        let buildControls = buildConfigurations(configurations, false)
+        let bc = assertBuildControls(buildControls, 1)[0]
+        expect(bc.config.sourceCwd).to.equal(scenarioCwd)
+        expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
+        expect(bc.sourceCommit()).not.to.equal(null)
+        expect(bc.sourceBranch()).to.equal('master')
+        expect(bc.tagName()).to.equal('v0.0.1')
+      })
+  })
+
+  describe('scenarios', function () {
+
+    beforeEach(function (done) {
+      let from = scenarioPath(this.currentTest.parent.title)
+      let to = PATH_MOCK
+
+      // clean testing folder `test/mock`
+      fs.removeSync(to)
+      fs.ensureDirSync(to)
+
+      try {
+        fancyLog(`Copying from ${from} to ${to}...`)
+        // copy scenario to `test/mock`
+        fs.copySync(from, to)
+
+        done()
+      }
+      catch (err) {
+        if (err && err.code === 'ENOENT') {
+          throw new Error(`Could not find scenario ${scenarioPath} in test/scenarios/`)
+        }
+
+        throw new Error(err)
+      }
+    })
+
+
+    // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
+    describe('basic deployment', function () {
+      let configurations = [
+        {
+          remote: {
+            repo: "../../remote"
+          },
+          branch: "master"
+        }
+      ]
+
+      it('should have pushed a file and had the correct commit in "validate" repo', () => {
+        // the current working directory is `test/mock/
+        return Promise.resolve()
+          .then(() => {
+            return gitInit()
+          })
+          .then(() => {
+            return gitAdd()
+          })
+          .then(() => {
+            return gitCommit("basic deployment")
+          })
+          .then(() => {
+            // verify output
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+
+              let bc = assertBuildControls(buildControls, 1)[0]
+              expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
+              expect(bc.sourceCommit()).not.to.equal(null)
+              expect(bc.sourceBranch()).to.equal('master')
+              expect(bc.tagName()).to.equal('v0.0.1')
+
+              expect(stdout).to.contain('Initialized empty Git repository')
+              expect(stdout).to.contain('Committing changes to "master".')
+              expect(stdout).to.contain('Pushing master to remote-')
+            })
+          })
+          .then(() => {
+            // verify that the commit actually got pushed
+            return childProcessExec('git rev-parse HEAD', {cwd: PATH_MOCK_REPO})
+          })
+          .then(function (results) {
+            // the commit sha from the source repo
+            return results.stdout.substr(0, 7)
+          })
+          .then(function (sha) {
+            return childProcessExec('git log --pretty=oneline --no-color', {cwd: PATH_MOCK_VALIDATE})
+              .then(function (results) {
+                expect(results.error).to.equal(null)
+                expect(results.stdout).to.contain('from commit ' + sha)
+              })
+          })
+      })
+    })
+
+    describe('feature branch deployment', function () {
+      let configurations = [
+        {
+          remote: {
+            repo: "../../remote"
+          },
+          branch: "master",
+          connectCommits: false,
+          commit: {
+            template: "%sourceBranch%"
+          }
+        }
+      ]
+      it('should contain the correct sourceBranch name', () => {
+        return Promise.resolve()
+          // Test case specific setup
+          .then(() => {
+            return gitInit()
+          })
+          .then(() => {
+            return childProcessExec('git checkout -b feature/numbers', {cwd: PATH_MOCK_REPO})
+          })
+          .then(() => {
+            return gitAdd()
+          })
+          .then(() => {
+            return gitCommit("feature branch deployment")
+          })
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+              let bc = assertBuildControls(buildControls, 1)[0]
+              expect(bc.sourceName()).to.equal('repo') // from the parent dir name
+              expect(bc.tagName()).to.equal(false)
+            })
+          })
+          .then(() => {
+            return childProcessExec('git log -1 --pretty=%B', {cwd: PATH_MOCK_VALIDATE})
+              .then((results) => {
+                let commitMsg = results.stdout.replace(/\n/g, '')
+                expect(commitMsg).to.equal('feature/numbers')
+              })
+          })
+      })
+    })
+
+    describe('merge multiple repos', function () {
+      let configurations = [
+        {
+          remote: {
+            repo: "../../remote"
+          },
+          connectCommits: false,
+          branch: "master",
+          cwd: "setup",
+          commit: {
+            template: "setup commit"
+          }
+        },
+        {
+          remote: {
+            repo: "../../remote"
+          },
+          connectCommits: false,
+          branch: "master",
+          commit: {
+            template: "test commit"
+          }
+        }
+      ]
+
+      it('merge multiple repos', () => {
+        return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+          expect(err).to.equal(null)
+          let bc = assertBuildControls(buildControls, 2)[1]
+          expect(bc.sourceName()).to.equal('repo') // from the parent dir name
+          expect(bc.tagName()).to.equal(false)
+          //expect(bc.remoteBranchExist()).to.equal(true)
+
+          let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+          expect(numberFile).be.eql('0 1 2\n')
+        })
+      })
+    })
+
+    describe('simple deploy', function () {
+
+      let configurations = [
+        {
+          remote: {
+            repo: "../../remote"
+          },
+          branch: "master",
+          connectCommits: false,
+          commit: {
+            template: "simple deploy commit message"
+          }
+        }
+      ]
+
+      it('should deploy multiple times with the correct commit message', () => {
+        return Promise.resolve()
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+              let bc = assertBuildControls(buildControls, 1)[0]
+
+              let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+              expect(numberFile).be.eql('1 2 3 4\n')
+            })
+          })
+
+          .then(() => {
+            fs.writeFileSync('repo/dist/numbers.txt', '100 200', {cwd: PATH_MOCK})
+
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+              let bc = assertBuildControls(buildControls, 1)[0]
+
+              let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
+              expect(numberFile).be.eql('100 200')
+            })
+          })
+
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE})
+              .then((results) => {
+                expect(results.stdout).to.contain('simple deploy commit message')
+              })
+          })
+      })
+    })
+
+    describe('secure endpoint', function () {
+
+      let configurations = [
+        {
+          remote: {
+            repo: "https://github.com/pubUsername/temp.git",
+            login: "privateUsername",
+            token: "1234567890abcdef"
+          },
+          branch: "master",
+          commit: {
+            template: "secure endpoint commit message"
+          },
+          connectCommits: false
+        }
+      ]
+
+      it('should mask sensitive information', () => {
+        return Promise.resolve()
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(stdout).not.to.contain('privateUsername')
+              expect(stdout).not.to.contain('1234567890abcdef')
+              expect(stdout).to.contain('<credentials>@github.com/pubUsername/temp.git')
+            }, true)
+          })
+          .then(() => {
+            // 'should have the correct remote url in git'
+            return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
+              .then((results) => {
+                expect(results.stdout).to.contain('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
+                expect(results.stdout).not.to.contain('<credentials>@github.com/pubUsername/temp.git')
+              })
+          })
+      })
+    })
+
+    describe('untracked branch in src repo', function () {
+
+      let configurations = [
+        {
+          remote: {
+            repo: "../"
+          },
+          cwd: "build",
+          branch: "build",
+          connectCommits: false,
+          commit: {
+            template: "a build commit for the untracked branch scenario"
+          }
+        }
+      ]
+
+      it('should track a branch in ../ if it was untracked', () => {
+        return Promise.resolve()
+          .then(() => {
+            fs.removeSync(PATH_MOCK_REPO)
+            return childProcessExec('git clone remote repo', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
+            fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+            })
+          })
+          .then(() => {
+            return childProcessExec('git checkout build', {cwd: PATH_MOCK_REPO})
+          })
+          .then(() => {
+            return childProcessExec('git log', {cwd: PATH_MOCK_REPO})
+              .then((results) => {
+                expect(results.stdout).to.contain('a build commit for the untracked branch scenario')
+              })
+          })
+      })
+
+      it('should not set tracking info if branch already exists', () => {
+        return Promise.resolve()
+          .then(() => {
+            fs.removeSync(PATH_MOCK_REPO)
+            return childProcessExec('git clone remote repo', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return childProcessExec('git branch build', {cwd: PATH_MOCK_REPO})
+          })
+          .then(() => {
+            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
+            fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+
+            })
+          })
+          .then(() => {
+            return childProcessExec('git branch -lvv', {cwd: PATH_MOCK_REPO}).then((results) => {
+              expect(results.stdout).not.to.contain('origin/build')
+            })
+          })
+      })
+    })
+
+    describe('remote urls', function () {
+
+      let configurations = (url) => {
+        return [
+          {
+            cwd: 'dist',
+            branch: 'master',
+            remote: {
+              repo: url
+            },
+            connectCommits: false,
+            commit: {
+              auto: false
+            },
+            push: false
+          }
+        ]
+      }
+
+      let shouldMatch = [
+        '/path/to/repo.git/',
+        'path/to/repo.git/',
+        '/path/to/repo',
+        'path/to/repo',
+        'C:/user/repo',
+        'file:///path/to/repo.git/',
+        'git://github.com:kevinawoo/temp.git',
+        'git@github.com:kevinawoo/temp.git',
+        'http://git.com/path/to/repo.git/',
+        'https://github.com/user/repo',
+        'ssh://user@server/project.git',
+        'user@server:project.git',
+        '../'
+      ]
+
+      for (let url of shouldMatch) {
+        it('should have created remote for: ' + url, () => {
+          return Promise.resolve()
+            .then(() => {
+              return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
+
+              })
+            })
+            // get remote url
+            .then(() => {
+              return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
+                .then((results) => {
+
+                  fancyLog(`\n*******************\n${stringify(results)}`)
+
+                  expect(results.stdout).to.contain(url)
+                })
+            })
+        })
+      }
+      let shouldNotMatch = [
+        'origin',
+        'weird$1+name',
+        'remote_name',
+        'remote_name_extended',
+        'remote-name',
+        'remote.test'
+      ]
+
+      for (let url of shouldNotMatch) {
+
+        it('should not have created remote for: ' + url, () => {
+
+          return Promise.resolve()
+            .then(() => {
+              return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
+
+              })
+            })
+            // get remote url
+            .then(() => {
+              return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
+                .then((results) => {
+
+                  //fancyLog(`\n*******************\n${stringify(results)}`)
+                  expect(results.stdout).not.to.contain(url)
+                  expect(results.stderr).not.to.contain(url)
+                })
+            })
+        })
+      }
+    })
+
+    describe('push diff branches', function () {
+
+      let configurations = [
+        {
+          connectCommits: false,
+          remote: {
+            repo: '../../stage_remote',
+            branch: 'master'
+          },
+          branch: 'stage',
+          commit: {template: 'new stage commit'}
+        },
+        {
+          connectCommits: false,
+          remote: {
+            repo: '../../prod_remote',
+            branch: 'master'
+          },
+          branch: 'prod',
+          commit: {template: 'new prod commit'}
+        }
+      ]
+
+      it('should push local:stage to stage:master and local:prod to prod:master', () => {
+        return Promise.resolve()
+
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              fs.removeSync(PATH_MOCK_VALIDATE)  // not needed because there's two diff remotes
+            })
+          })
+          .then(() => {
+            fs.removeSync('stage_validate', {cwd: PATH_MOCK})
+            return childProcessExec('git clone stage_remote stage_validate', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'stage_validate')})
+              .then((results) => {
+                expect(results.stdout).to.contain('first stage commit')
+                expect(results.stdout).to.contain('new stage commit')
+              })
+          })
+          .then(() => {
+            fs.removeSync('prod_validate', {cwd: PATH_MOCK})
+            return childProcessExec('git clone prod_remote prod_validate', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'prod_validate')})
+              .then((results) => {
+                expect(results.stdout).to.contain('first prod commit')
+                expect(results.stdout).to.contain('new prod commit')
+
+              })
+          })
+      })
+
+
+      it('should do it multiple times', () => {
+        this.timeout(30000)
+
+        return Promise.resolve()
+
+          .then(() => {
+            return execScenario(configurations)
+          })
+          .then(() => {
+            fs.writeFileSync('repo/dist/empty_file', 'file not empty anymore', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return execScenario(configurations)
+          })
+          .then(() => {
+            return childProcessExec('git clone stage_remote stage_validate', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'stage_validate')})
+              .then((results) => {
+                expect(results.stdout.match(/new stage commit/g)).be.length(2)
+              })
+          })
+          .then(() => {
+            return childProcessExec('git clone prod_remote prod_validate', {cwd: PATH_MOCK})
+          })
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'prod_validate')})
+              .then((results) => {
+                expect(results.stdout.match(/new prod commit/g)).be.length(2)
+
+              })
+          })
+      })
+    })
+
+
+    describe('git config', function () {
+
+      let configurations = [{
+        git: {
+          config: {
+            'user.name': "John Doe",
+            'user.email': "johndoe@example.com",
+            'http.sslVerify': false
+          }
+        },
+        remote: {repo: '../../remote'},
+        connectCommits: false,
+        branch: 'master',
+        commit: {template: 'git config deploy message'}
+      }]
+
+      it('should set git config variables properly', () => {
+        return Promise.resolve()
+
+          .then(() => {
+            return childProcessExec('git init', {cwd: PATH_MOCK_REPO_DIST})
+          })
+
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+            })
+          })
+          .then(() => {
+            return childProcessExec('git config user.name', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
+              expect(results.stdout).to.contain('John Doe')
+            })
+          })
+          .then(() => {
+            return childProcessExec('git config user.email', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
+              expect(results.stdout).to.contain('johndoe@example.com')
+            })
+          })
+          .then(() => {
+            return childProcessExec('git config http.sslVerify', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
+              expect(results.stdout).to.contain('false')
+            })
+          })
+      })
+    })
+
+    describe('deploy to named remote', function () {
+
+      let configurations = [{
+        remote: {
+          name: 'origin',
+          repo: '../../remote'
+        },
+        connectCommits: false,
+        branch: 'master',
+        commit: {template: 'new deploy to named remote commit'}
+      }]
+
+      it('should have deployed to origin', () => {
+        return Promise.resolve()
+
+          .then(() => {
+            return childProcessExec('git init', {cwd: PATH_MOCK_REPO_DIST})
+          })
+          .then(() => {
+            return childProcessExec('git remote add origin ../../remote', {cwd: PATH_MOCK_REPO_DIST})
+          })
+          .then(() => {
+            return execScenario(configurations)
+          })
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE}).then((results) => {
+              expect(results.stdout).to.contain('new deploy to named remote commit')
+            })
+          })
+      })
+    })
+
+
+    describe('force push', function () {
+
+      let configurations = [{
+        remote: {repo: '../../remote'},
+        connectCommits: false,
+        force: true,
+        branch: 'master',
+        commit: {template: 'commit to be overwritten'}
+      }]
+
+      beforeEach(() => {
+        return Promise.resolve()
+          .then(() => {
+            // initialize dist to be a repo and make a commit, this commit is a "bad" commit
+            return execScenario(configurations)
+          })
+          .then(() => {
+            // we set our dist repo to be one commit behind remote
+            return childProcessExec('git reset --hard HEAD^ ', {cwd: PATH_MOCK_REPO_DIST})
+          })
+          .then(() => {
+            // now we'll go and diverge, remember we're 1 behind, 1 ahead
+            fs.writeFileSync('repo/dist/numbers.txt', '9 9 9 9', {cwd: PATH_MOCK})
+            return gitCommit("number 3 commit", 'repo/dist', {cwd: PATH_MOCK})
+          })
+      })
+
+
+      it('should force push', () => {
+        return Promise.resolve()
+          // We're now going to push to the remote, since we've committed before
+          // there will be nothing new to commit. This is just a push to remote
+          // however, we're forcing remote to track the dist repo.
+          .then(() => {
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+            })
+          })
+
+          // the dist repo has 2 commits, namely "number 3 commit"
+          // and it should not have the old commit "commit to be overwritten"
+          .then(() => {
+            return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE}).then((results) => {
+              expect(results.stdout).to.contain('number 3 commit')
+              expect(results.stdout).not.to.contain('commit to be overwritten')
+            })
+          })
+      })
+    })
+
+    describe('connect commits', function () {
+
+      let configurations = [{
+        cwd: 'build',
+        branch: 'build',
+        remote: {repo: '../'},
+        connectCommits: true
+      }]
+
+      it('should not be able to deploy if there is uncommitted files', () => {
+        return Promise.resolve()
+          .then(() => {
+            return gitInit()
+          })
+          .then(() => {
+            fs.writeFileSync('repo/file.txt', 'brand file contents.\n', {cwd: PATH_MOCK})
+            return gitAdd()
+          })
+          .then(() => {
+            return gitCommit("first commit")
+          })
+          .then(() => {
+            fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
+            fs.writeFileSync('repo/build/hello.txt', 'hello world!\n', {cwd: PATH_MOCK})
+
+            // pretend there was some unchanged files
+            fs.writeFileSync('repo/file.txt', 'more content added.\n', {cwd: PATH_MOCK})
+            return execScenario(configurations, function (err, stdout, stderr, buildControls) {
+              expect(err).to.equal(null)
+              expect(stdout).to.contain('more content added.')
+              // should be in both, the last part is really just testing test code, but useful because test errors on allowErrors is hairy otherwise.
+              expect(stdout).to.contain('There are uncommitted changes in your working directory.')
+              expect(stderr).to.contain('There are uncommitted changes in your working directory.')
+            }, true)
+          })
+      })
+    })
+  })
+})
+
+let buildConfigurations = (configurations, logCapture = true) => {
+  let buildControls = []
+
+  for (let config of configurations) {
+    config['debug'] = debug
+
+    // modify the cwd to be based off of the mock dir instead of our root dir
+    if (config.sourceCwd) {
+      config.sourceCwd = Paths.resolveCwd(PATH_MOCK_REPO, config.sourceCwd)
+    }
+    else {
+      // test config didn't have it, set the same default as BuildControl
+      config.sourceCwd = PATH_MOCK_REPO
+    }
+
+    //capture the logs and verify the output
+    let buildControl = null
+    if (logCapture) {
+      buildControl = new LogCaptureBuildControl(config)
+    }
+    else {
+      buildControl = new BuildControl(config)
+    }
+
+    buildControls.push(buildControl)
+  }
+  return buildControls
+}
+
+
 let execScenario = (configurations, assertionCallback = null, allowErrors = false) => {
-
   return Promise.resolve()
-
     // create the "remote" to be pushed to
     .tap(() => {
       fs.ensureDirSync(PATH_MOCK_REMOTE)
@@ -51,14 +789,11 @@ let execScenario = (configurations, assertionCallback = null, allowErrors = fals
       let stderr = null
       // for each configuration, run an instance of BuildControl
       fancyLog(`\n\n\n------------------------------------------`)
-      let buildControls = []
+      let buildControls = buildConfigurations(configurations)
 
       //capture the logs and verify the output
       let logs = ``
-      for (let config of configurations) {
-        config['debug'] = debug
-        let buildControl = new LogCaptureBuildControl(config)
-        buildControls.push(buildControl)
+      for (let buildControl of buildControls) {
         try {
           buildControl.run()
         }
@@ -96,6 +831,9 @@ let execScenario = (configurations, assertionCallback = null, allowErrors = fals
     })
 }
 
+/**
+ * Simple test helper to capture the output
+ */
 const LogCaptureBuildControl = class extends BuildControl {
 
   constructor(config = {}) {
@@ -104,15 +842,21 @@ const LogCaptureBuildControl = class extends BuildControl {
 
     // hack to get the git messages as well
     this.originalGitLog = this.git.log
-    this.git.log = ((msg) => {
-      this.logs.push(this.maskSensitive(msg))
-      this.originalGitLog(msg)
+    this.git.log = ((msg, level) => {
+      this.pushLog(msg, level)
+      this.originalGitLog(msg, level)
     })
   }
 
-  log(msg) {
-    this.logs.push(this.maskSensitive(msg))
-    super.log(msg)
+  log(msg, level) {
+    this.pushLog(msg, level)
+    super.log(msg, level)
+  }
+
+  // mimic the log output, and don't capture debug
+  pushLog(msg, level) {
+    if (level === undefined || !level.includes('debug'))
+      this.logs.push(this.maskSensitive(msg))
   }
 
   allLogs() {
@@ -120,7 +864,7 @@ const LogCaptureBuildControl = class extends BuildControl {
   }
 }
 
-let childProcessExec = (command, options) => {
+const childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
     fancyLog(`test: ${command}`)
     return childProcess.exec(command, options, function (err, stdout, stderr, buildControls) {
@@ -133,7 +877,7 @@ let childProcessExec = (command, options) => {
   })
 }
 
-let assertBuildControls = (buildControls, length) => {
+const assertBuildControls = (buildControls, length) => {
   expect(buildControls).not.to.equal(null)
   expect(buildControls).to.be.a('array')
   expect(buildControls).to.have.length(length)
@@ -141,699 +885,21 @@ let assertBuildControls = (buildControls, length) => {
   return buildControls
 }
 
-let gitInit = (cwd = PATH_MOCK_REPO) => {
+const gitInit = (cwd = PATH_MOCK_REPO) => {
   return childProcessExec('git init', {cwd: cwd})
 }
 
-let gitAdd = (cwd = PATH_MOCK_REPO) => {
+const gitAdd = (cwd = PATH_MOCK_REPO) => {
   return childProcessExec('git add .', {cwd: cwd})
 }
 
-let gitCommit = (msg, cwd = PATH_MOCK_REPO) => {
+const gitCommit = (msg, cwd = PATH_MOCK_REPO) => {
   return childProcessExec(`git commit -m "${msg}"`, {cwd: cwd})
 }
 
-/**
- * Tests
- *
- * Each test is using the perspective as a "user", take a look at the "basic deploy" suite.
- *
- * `describe` suite's title should have the same name as the scenario folder.
- *
- * Assumptions:
- *    - each tests' current working directory has been set to `test/mock`
- */
-describe('BuildControl', function () {
-  this.timeout(20000)
+const scenarioPath = (name) => {
+  return path.join(__dirname, `scenarios/${name}`)
+}
 
 
-  beforeEach(function (done) {
-    // the describe is the mock folder's name.
-    let scenarioPath = this.currentTest.parent.title
-    let from = path.join(__dirname, `scenarios/${scenarioPath}`)
-    let to = path.join(__dirname, 'mock')
 
-    // clean testing folder `test/mock`
-    fs.removeSync(to)
-    fs.ensureDirSync(to)
-
-    try {
-      fancyLog(`Copying from ${from} to ${to}...`)
-      // copy scenario to `test/mock`
-      fs.copySync(from, to)
-
-      done()
-    }
-    catch (err) {
-      if (err && err.code === 'ENOENT') {
-        throw new Error(`Could not find scenario ${scenarioPath} in test/scenarios/`)
-      }
-
-      throw new Error(err)
-    }
-  })
-
-
-  // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
-
-  describe('basic deployment', function () {
-    let configurations = [
-      {
-        remote: {
-          repo: "../../remote"
-        },
-        branch: "master"
-      }
-    ]
-
-    it('should have pushed a file and had the correct commit in "verify" repo', () => {
-      // the current working directory is `test/mock/
-      return Promise.resolve()
-        .then(() => {
-          return gitInit()
-        })
-        .then(() => {
-          return gitAdd()
-        })
-        .then(() => {
-          return gitCommit("basic deployment")
-        })
-        .then(() => {
-          // verify output
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-
-            let bc = assertBuildControls(buildControls, 1)[0]
-            expect(bc.sourceName()).to.equal('basic-deployment') // name from package.json
-            expect(bc.sourceCommit()).not.to.equal(null)
-            expect(bc.sourceBranch()).to.equal('master')
-            expect(bc.tagName()).to.equal('v0.0.1')
-
-            expect(stdout).to.contain('Initialized empty Git repository')
-            expect(stdout).to.contain('Committing changes to "master".')
-            expect(stdout).to.contain('Pushing master to remote-')
-          })
-        })
-        .then(() => {
-          // verify that the commit actually got pushed
-          return childProcessExec('git rev-parse HEAD', {cwd: PATH_MOCK_REPO})
-        })
-        .then(function (results) {
-          // the commit sha from the source repo
-          return results.stdout.substr(0, 7)
-        })
-        .then(function (sha) {
-          return childProcessExec('git log --pretty=oneline --no-color', {cwd: PATH_MOCK_VALIDATE})
-            .then(function (results) {
-              expect(results.error).to.equal(null)
-              expect(results.stdout).to.contain('from commit ' + sha)
-            })
-        })
-    })
-  })
-
-  describe('feature branch deployment', function () {
-    let configurations = [
-      {
-        remote: {
-          repo: "../../remote"
-        },
-        branch: "master",
-        connectCommits: false,
-        commit: {
-          template: "%sourceBranch%"
-        }
-      }
-    ]
-    it('should contain the correct sourceBranch name', () => {
-      return Promise.resolve()
-        // Test case specific setup
-        .then(() => {
-          return gitInit()
-        })
-        .then(() => {
-          return childProcessExec('git checkout -b feature/numbers', {cwd: PATH_MOCK_REPO})
-        })
-        .then(() => {
-          return gitAdd()
-        })
-        .then(() => {
-          return gitCommit("feature branch deployment")
-        })
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-            let bc = assertBuildControls(buildControls, 1)[0]
-            expect(bc.sourceName()).to.equal('repo') // from the parent dir name
-            expect(bc.tagName()).to.equal(false)
-          })
-        })
-        .then(() => {
-          return childProcessExec('git log -1 --pretty=%B', {cwd: PATH_MOCK_VALIDATE})
-            .then((results) => {
-              let commitMsg = results.stdout.replace(/\n/g, '')
-              expect(commitMsg).to.equal('feature/numbers')
-            })
-        })
-    })
-  })
-
-  describe('merge multiple repos', function () {
-    let configurations = [
-      {
-        remote: {
-          repo: "../../remote"
-        },
-        connectCommits: false,
-        branch: "master",
-        cwd: "setup",
-        commit: {
-          template: "setup commit"
-        }
-      },
-      {
-        remote: {
-          repo: "../../remote"
-        },
-        connectCommits: false,
-        branch: "master",
-        commit: {
-          template: "test commit"
-        }
-      }
-    ]
-
-    it('merge multiple repos', () => {
-      return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-        expect(err).to.equal(null)
-        let bc = assertBuildControls(buildControls, 2)[1]
-        expect(bc.sourceName()).to.equal('repo') // from the parent dir name
-        expect(bc.tagName()).to.equal(false)
-        //expect(bc.remoteBranchExist()).to.equal(true)
-
-        let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
-        expect(numberFile).be.eql('0 1 2\n')
-      })
-    })
-  })
-
-  describe('simple deploy', function () {
-
-    let configurations = [
-      {
-        remote: {
-          repo: "../../remote"
-        },
-        branch: "master",
-        connectCommits: false,
-        commit: {
-          template: "simple deploy commit message"
-        }
-      }
-    ]
-
-    it('should deploy multiple times with the correct commit message', () => {
-      return Promise.resolve()
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-            let bc = assertBuildControls(buildControls, 1)[0]
-
-            let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
-            expect(numberFile).be.eql('1 2 3 4\n')
-          })
-        })
-
-        .then(() => {
-          fs.writeFileSync('repo/dist/numbers.txt', '100 200', {cwd: PATH_MOCK})
-
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-            let bc = assertBuildControls(buildControls, 1)[0]
-
-            let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8', cwd: PATH_MOCK})
-            expect(numberFile).be.eql('100 200')
-          })
-        })
-
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE})
-            .then((results) => {
-              expect(results.stdout).to.contain('simple deploy commit message')
-            })
-        })
-    })
-  })
-
-  describe('secure endpoint', function () {
-
-    let configurations = [
-      {
-        remote: {
-          repo: "https://github.com/pubUsername/temp.git",
-          login: "privateUsername",
-          token: "1234567890abcdef"
-        },
-        branch: "master",
-        commit: {
-          template: "secure endpoint commit message"
-        },
-        connectCommits: false
-      }
-    ]
-
-    it('should mask sensitive information', () => {
-      return Promise.resolve()
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(stdout).not.to.contain('privateUsername')
-            expect(stdout).not.to.contain('1234567890abcdef')
-            expect(stdout).to.contain('<credentials>@github.com/pubUsername/temp.git')
-          }, true)
-        })
-        .then(() => {
-          // 'should have the correct remote url in git'
-          return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
-            .then((results) => {
-              expect(results.stdout).to.contain('https://privateUsername:1234567890abcdef@github.com/pubUsername/temp.git')
-              expect(results.stdout).not.to.contain('<credentials>@github.com/pubUsername/temp.git')
-            })
-        })
-    })
-  })
-
-  describe('untracked branch in src repo', function () {
-
-    let configurations = [
-      {
-        remote: {
-          repo: "../"
-        },
-        cwd: "build",
-        branch: "build",
-        connectCommits: false,
-        commit: {
-          template: "a build commit for the untracked branch scenario"
-        }
-      }
-    ]
-
-    it('should track a branch in ../ if it was untracked', () => {
-      return Promise.resolve()
-        .then(() => {
-          fs.removeSync(PATH_MOCK_REPO)
-          return childProcessExec('git clone remote repo', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-          fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-          })
-        })
-        .then(() => {
-          return childProcessExec('git checkout build', {cwd: PATH_MOCK_REPO})
-        })
-        .then(() => {
-          return childProcessExec('git log', {cwd: PATH_MOCK_REPO})
-            .then((results) => {
-              expect(results.stdout).to.contain('a build commit for the untracked branch scenario')
-            })
-        })
-    })
-
-    it('should not set tracking info if branch already exists', () => {
-      return Promise.resolve()
-        .then(() => {
-          fs.removeSync(PATH_MOCK_REPO)
-          return childProcessExec('git clone remote repo', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return childProcessExec('git branch build', {cwd: PATH_MOCK_REPO})
-        })
-        .then(() => {
-          fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-          fs.writeFileSync('repo/build/hello.txt', 'hello world!', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-
-          })
-        })
-        .then(() => {
-          return childProcessExec('git branch -lvv', {cwd: PATH_MOCK_REPO}).then((results) => {
-            expect(results.stdout).not.to.contain('origin/build')
-          })
-        })
-    })
-  })
-
-  describe('remote urls', function () {
-
-    let configurations = (url) => {
-      return [
-        {
-          cwd: 'dist',
-          branch: 'master',
-          remote: {
-            repo: url
-          },
-          connectCommits: false,
-          commit: {
-            auto: false
-          },
-          push: false
-        }
-      ]
-    }
-
-    let shouldMatch = [
-      '/path/to/repo.git/',
-      'path/to/repo.git/',
-      '/path/to/repo',
-      'path/to/repo',
-      'C:/user/repo',
-      'file:///path/to/repo.git/',
-      'git://github.com:kevinawoo/temp.git',
-      'git@github.com:kevinawoo/temp.git',
-      'http://git.com/path/to/repo.git/',
-      'https://github.com/user/repo',
-      'ssh://user@server/project.git',
-      'user@server:project.git',
-      '../'
-    ]
-
-    for (let url of shouldMatch) {
-      it('should have created remote for: ' + url, () => {
-        return Promise.resolve()
-          .then(() => {
-            return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
-
-            })
-          })
-          // get remote url
-          .then(() => {
-            return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
-              .then((results) => {
-
-                fancyLog(`\n*******************\n${stringify(results)}`)
-
-                expect(results.stdout).to.contain(url)
-              })
-          })
-      })
-    }
-    let shouldNotMatch = [
-      'origin',
-      'weird$1+name',
-      'remote_name',
-      'remote_name_extended',
-      'remote-name',
-      'remote.test'
-    ]
-
-    for (let url of shouldNotMatch) {
-
-      it('should not have created remote for: ' + url, () => {
-
-        return Promise.resolve()
-          .then(() => {
-            return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
-
-            })
-          })
-          // get remote url
-          .then(() => {
-            return childProcessExec('git remote -v', {cwd: PATH_MOCK_REPO_DIST})
-              .then((results) => {
-
-                //fancyLog(`\n*******************\n${stringify(results)}`)
-                expect(results.stdout).not.to.contain(url)
-                expect(results.stderr).not.to.contain(url)
-              })
-          })
-      })
-    }
-  })
-
-  describe('push diff branches', function () {
-
-    let configurations = [
-      {
-        connectCommits: false,
-        remote: {
-          repo: '../../stage_remote',
-          branch: 'master'
-        },
-        branch: 'stage',
-        commit: {template: 'new stage commit'}
-      },
-      {
-        connectCommits: false,
-        remote: {
-          repo: '../../prod_remote',
-          branch: 'master'
-        },
-        branch: 'prod',
-        commit: {template: 'new prod commit'}
-      }
-    ]
-
-    it('should push local:stage to stage:master and local:prod to prod:master', () => {
-      return Promise.resolve()
-
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            fs.removeSync(PATH_MOCK_VALIDATE)  // not needed because there's two diff remotes
-          })
-        })
-        .then(() => {
-          fs.removeSync('stage_validate', {cwd: PATH_MOCK})
-          return childProcessExec('git clone stage_remote stage_validate', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join( PATH_MOCK, 'stage_validate')})
-            .then((results) => {
-              expect(results.stdout).to.contain('first stage commit')
-              expect(results.stdout).to.contain('new stage commit')
-            })
-        })
-        .then(() => {
-          fs.removeSync('prod_validate', {cwd: PATH_MOCK})
-          return childProcessExec('git clone prod_remote prod_validate', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'prod_validate')})
-            .then((results) => {
-              expect(results.stdout).to.contain('first prod commit')
-              expect(results.stdout).to.contain('new prod commit')
-
-            })
-        })
-    })
-
-
-    it('should do it multiple times', () => {
-      this.timeout(30000)
-
-      return Promise.resolve()
-
-        .then(() => {
-          return execScenario(configurations)
-        })
-        .then(() => {
-          fs.writeFileSync('repo/dist/empty_file', 'file not empty anymore', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return execScenario(configurations)
-        })
-        .then(() => {
-          return childProcessExec('git clone stage_remote stage_validate', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'stage_validate')})
-            .then((results) => {
-              expect(results.stdout.match(/new stage commit/g)).be.length(2)
-            })
-        })
-        .then(() => {
-          return childProcessExec('git clone prod_remote prod_validate', {cwd: PATH_MOCK})
-        })
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: path.join(PATH_MOCK, 'prod_validate')})
-            .then((results) => {
-              expect(results.stdout.match(/new prod commit/g)).be.length(2)
-
-            })
-        })
-    })
-  })
-
-
-  describe('git config', function () {
-
-    let configurations = [{
-      git: {
-        config: {
-          'user.name': "John Doe",
-          'user.email': "johndoe@example.com",
-          'http.sslVerify': false
-        }
-      },
-      remote: {repo: '../../remote'},
-      connectCommits: false,
-      branch: 'master',
-      commit: {template: 'git config deploy message'}
-    }]
-
-    it('should set git config variables properly', () => {
-      return Promise.resolve()
-
-        .then(() => {
-          return childProcessExec('git init', {cwd: PATH_MOCK_REPO_DIST})
-        })
-
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-          })
-        })
-        .then(() => {
-          return childProcessExec('git config user.name', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
-            expect(results.stdout).to.contain('John Doe')
-          })
-        })
-        .then(() => {
-          return childProcessExec('git config user.email', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
-            expect(results.stdout).to.contain('johndoe@example.com')
-          })
-        })
-        .then(() => {
-          return childProcessExec('git config http.sslVerify', {cwd: PATH_MOCK_REPO_DIST}).then(function (results) {
-            expect(results.stdout).to.contain('false')
-          })
-        })
-    })
-  })
-
-  describe('deploy to named remote', function () {
-
-    let configurations = [{
-      remote: {
-        name: 'origin',
-        repo: '../../remote'
-      },
-      connectCommits: false,
-      branch: 'master',
-      commit: {template: 'new deploy to named remote commit'}
-    }]
-
-    it('should have deployed to origin', () => {
-      return Promise.resolve()
-
-        .then(() => {
-          return childProcessExec('git init', {cwd: PATH_MOCK_REPO_DIST})
-        })
-        .then(() => {
-          return childProcessExec('git remote add origin ../../remote', {cwd: PATH_MOCK_REPO_DIST})
-        })
-        .then(() => {
-          return execScenario(configurations)
-        })
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE}).then((results) => {
-            expect(results.stdout).to.contain('new deploy to named remote commit')
-          })
-        })
-    })
-  })
-
-
-  describe('force push', function () {
-
-    let configurations = [{
-      remote: {repo: '../../remote'},
-      connectCommits: false,
-      force: true,
-      branch: 'master',
-      commit: {template: 'commit to be overwritten'}
-    }]
-
-    beforeEach(() => {
-      return Promise.resolve()
-        .then(() => {
-          // initialize dist to be a repo and make a commit, this commit is a "bad" commit
-          return execScenario(configurations)
-        })
-        .then(() => {
-          // we set our dist repo to be one commit behind remote
-          return childProcessExec('git reset --hard HEAD^ ', {cwd: PATH_MOCK_REPO_DIST})
-        })
-        .then(() => {
-          // now we'll go and diverge, remember we're 1 behind, 1 ahead
-          fs.writeFileSync('repo/dist/numbers.txt', '9 9 9 9', {cwd: PATH_MOCK})
-          return gitCommit("number 3 commit", 'repo/dist', {cwd: PATH_MOCK})
-        })
-    })
-
-
-    it('should force push', () => {
-      return Promise.resolve()
-        // We're now going to push to the remote, since we've committed before
-        // there will be nothing new to commit. This is just a push to remote
-        // however, we're forcing remote to track the dist repo.
-        .then(() => {
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-          })
-        })
-
-        // the dist repo has 2 commits, namely "number 3 commit"
-        // and it should not have the old commit "commit to be overwritten"
-        .then(() => {
-          return childProcessExec('git log --pretty=oneline --abbrev-commit --no-color', {cwd: PATH_MOCK_VALIDATE}).then((results) => {
-            expect(results.stdout).to.contain('number 3 commit')
-            expect(results.stdout).not.to.contain('commit to be overwritten')
-          })
-        })
-    })
-  })
-
-  describe('connect commits', function () {
-
-    let configurations = [{
-      cwd: 'build',
-      branch: 'build',
-      remote: {repo: '../'},
-      connectCommits: true
-    }]
-
-    it('should not be able to deploy if there is uncommitted files', () => {
-      return Promise.resolve()
-        .then(() => {
-          return gitInit()
-        })
-        .then(() => {
-          fs.writeFileSync('repo/file.txt', 'brand file contents.\n', {cwd: PATH_MOCK})
-          return gitAdd()
-        })
-        .then(() => {
-          return gitCommit("first commit")
-        })
-        .then(() => {
-          fs.ensureDirSync('repo/build', {cwd: PATH_MOCK})
-          fs.writeFileSync('repo/build/hello.txt', 'hello world!\n', {cwd: PATH_MOCK})
-
-          // pretend there was some unchanged files
-          fs.writeFileSync('repo/file.txt', 'more content added.\n', {cwd: PATH_MOCK})
-          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
-            expect(err).to.equal(null)
-            expect(stdout).to.contain('more content added.')
-            // should be in both, the last part is really just testing test code, but useful because test errors on allowErrors is hairy otherwise.
-            expect(stdout).to.contain('There are uncommitted changes in your working directory.')
-            expect(stderr).to.contain('There are uncommitted changes in your working directory.')
-          }, true)
-        })
-    })
-  })
-})

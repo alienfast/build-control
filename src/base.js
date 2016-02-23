@@ -3,7 +3,6 @@ import stringify from 'stringify-object'
 import shelljs from 'shelljs'
 import chalk from 'chalk'
 import fancyLog from 'fancy-log'
-import pathIsAbsolute from 'path-is-absolute'
 import path from 'path'
 
 export const Default = {
@@ -19,11 +18,6 @@ const Base = class {
    */
   constructor(config) {
     this.config = extend(true, {}, Default, config)
-
-    // get a fully resolved cwd
-    if (!pathIsAbsolute(this.config.cwd)) {
-      this.config.cwd = path.join(shelljs.pwd(), this.config.cwd)
-    }
 
     // TODO: tests override #log and we need to complete construction before logging....not sure how to make that happen, setTimeout is hokey and doesn't work right
     //this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
