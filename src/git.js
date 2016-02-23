@@ -18,7 +18,7 @@ const Git = class extends Base {
   }
 
   diff() {
-    return this.exec('git diff', false)
+    return this.exec('git diff', true)
   }
 
   sourceBranch() {

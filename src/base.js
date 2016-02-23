@@ -59,14 +59,14 @@ const Base = class {
       options['cwd'] = this.config.cwd
     }
     else {
-      throw new Error('cwd is required')
+      this.notifyError('cwd is required')
     }
 
     this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
     let shellResult = shelljs.exec(command, options)
-    if (shellResult.code === 0 || shellResult.code === 1) {
+    let output = this.logShellOutput(shellResult, logResult);
 
-      let output = this.logShellOutput(shellResult, logResult);
+    if (shellResult.code === 0 || shellResult.code === 1) {
 
       // ---
       // determine the return value
@@ -82,14 +82,19 @@ const Base = class {
         return shellResult.code
       }
       else {
-        let msg = `Command failed \`${command}\`, cwd: ${options.cwd}: ${shellResult.stderr}.`
-        this.error(msg)
-        throw new Error(this.maskSensitive(msg))
+        this.notifyError(`Command failed \`${command}\`, cwd: ${options.cwd}: ${shellResult.stderr}.`)
       }
     }
   }
 
+  notifyError(msg){
+    this.error(msg)
+    throw new Error(this.maskSensitive(msg))
+  }
+
   logShellOutput(shellResult, logResult) {
+    this.debug(`[exit code] ${shellResult.code}`)
+
     // ---
     // Log the result
     // strangely enough, sometimes useful messages from git are an stderr even when it is a successful command with a 0 result code
@@ -110,17 +115,22 @@ const Base = class {
     return output;
   }
 
-  log(msg) {
+  log(message, level = null){
+    let msg = ``
+    if(level){
+      msg += level
+    }
+    msg += `[${chalk.grey(this.constructor.name)}] ${message}`
     fancyLog(this.maskSensitive(msg))
   }
 
   error(msg) {
-    this.log(`[${chalk.red('error')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
+    this.log(msg, `[${chalk.red('error')}]`)
   }
 
   debug(msg) {
     if (this.config.debug) {
-      this.log(`[${chalk.cyan('debug')}][${chalk.cyan(this.constructor.name)}] ${msg}`)
+      this.log(msg, `[${chalk.cyan('debug')}]`)
     }
   }
 

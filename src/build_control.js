@@ -76,8 +76,8 @@ const BuildControl = class extends Base {
     }
 
 
-    this.projectCwd = shelljs.pwd()
-    this.projectGit = new Git({cwd: this.projectCwd, debug: this.config.debug, sensitive: this.config.sensitive})
+    this.sourceCwd = shelljs.pwd()
+    this.sourceGit = new Git({cwd: this.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.package = this.readPackage()
   }
@@ -118,7 +118,7 @@ const BuildControl = class extends Base {
   }
 
   readPackage() {
-    let file = path.join(this.projectCwd, 'package.json')
+    let file = path.join(this.sourceCwd, 'package.json')
     if (shelljs.test('-f', file, {silent: true})) {
       return JSON.parse(fs.readFileSync(file, 'utf8'))
     }
@@ -151,22 +151,23 @@ const BuildControl = class extends Base {
     if (this.config.connectCommits) {
       let diff = this.git.diff()
       if (diff !== '') {
-        throw new Error('There are uncommitted changes in your working directory. \n' +
-          'Please commit changes to the main project before you commit to \n' +
-          'the built code.\n')
+        this.notifyError('There are uncommitted changes in your working directory. Please commit changes to the main project before you commit to the built code.')
+      }
+      else {
+        this.debug(`No diffs found.`)
       }
     }
 
     if (this.config.fetch.shallow && semver.lt(version, '1.9.0')) {
-      throw new Error(`Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ${version}.`)
+      this.notifyError(`Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ${version}.`)
     }
   }
 
   /**
    * Attempt to track a branch from origin. It may fail on times that the branch is already tracking another remote. There is no problem when that happens, nor does it have any affect
    */
-  verifyProjectBranchIsTracked() {
-    this.projectGit.track(this.config.branch)
+  verifySourceBranchIsTracked() {
+    this.sourceGit.track(this.config.branch)
   }
 
   /**
@@ -272,14 +273,14 @@ const BuildControl = class extends Base {
     if (this._sourceCommit) {
       return this._sourceCommit
     }
-    return this._sourceCommit = this.projectGit.sourceCommit()
+    return this._sourceCommit = this.sourceGit.sourceCommit()
   }
 
   sourceBranch() {
     if (this._sourceBranch) {
       return this._sourceBranch
     }
-    return this._sourceBranch = this.projectGit.sourceBranch()
+    return this._sourceBranch = this.sourceGit.sourceBranch()
   }
 
   /**
@@ -344,67 +345,58 @@ const BuildControl = class extends Base {
 
   run() {
     // Run task
-    try {
+    this.log(`Starting ${this.sourceName()} for commit ${this.sourceCommit()} on branch ${this.sourceBranch()} using directory ${this.config.cwd}...`)
 
-      this.log(`BuildControl starting ${this.sourceName()} for commit ${this.sourceCommit()} on branch ${this.sourceBranch()} using directory ${this.config.cwd}...`)
+    // Prepare
+    this.checkRequirements()
+    if (this.config.remote.repo === '../') this.verifySourceBranchIsTracked()
 
-      // Prepare
-      this.checkRequirements()
-      if (this.config.remote.repo === '../') this.verifyProjectBranchIsTracked()
+    // Set up repository
+    this.ensureGitInit()
+    this.configureGit()
+    this.ensureRemote()
 
-      // Set up repository
-      this.ensureGitInit()
-      this.configureGit()
-      this.ensureRemote()
+    // Set up local branch
+    let localBranchExists = this.localBranchExists()
+    let remoteBranchExists = this.remoteBranchExists()
 
-      // Set up local branch
-      //this.log(`\n\n**********************\nTHIS IS THE ISSUE`)
-      let localBranchExists = this.localBranchExists()
-      let remoteBranchExists = this.remoteBranchExists()
-      //this.log(`localBranchExists: ${localBranchExists}`)
-      //this.log(`remoteBranchExists: ${remoteBranchExists}`)
+    if (remoteBranchExists) {
+      this.fetch()
+    }
 
-      if (remoteBranchExists) {
-        this.fetch()
-      }
+    if (remoteBranchExists && localBranchExists) {
+      // Make sure local is tracking remote
+      this.ensureLocalBranchTracksRemote()
 
-      if (remoteBranchExists && localBranchExists) {
-        // Make sure local is tracking remote
-        this.ensureLocalBranchTracksRemote()
-
-        // Update local branch history if necessary
-        if (this.shouldUpdate()) {
-          this.fetch(true)
-        }
-      }
-      else if (remoteBranchExists && !localBranchExists) { //// TEST THIS ONE
-        // Create local branch that tracks remote
-        this.git.track(this.config.branch, this.config.remote.name, this.resolveBranch())
-      }
-      else if (!remoteBranchExists && !localBranchExists) {
-        // Create local branch
-        this.log(`Creating branch "${this.config.branch}".`)
-        this.git.checkout(this.config.branch)
-      }
-
-      // Perform actions
-      this.git.symbolicRefHead(this.config.branch)
-      this.git.reset()
-
-      if (this.config.commit.auto) {
-        this.commit()
-      }
-
-      if (this.config.tag.name()) {
-        this.tagLocalBranch()
-      }
-
-      if (this.config.push) {
-        this.push()
+      // Update local branch history if necessary
+      if (this.shouldUpdate()) {
+        this.fetch(true)
       }
     }
-    catch (e) {
-      throw e
+    else if (remoteBranchExists && !localBranchExists) { //// TEST THIS ONE
+      // Create local branch that tracks remote
+      this.git.track(this.config.branch, this.config.remote.name, this.resolveBranch())
+    }
+    else if (!remoteBranchExists && !localBranchExists) {
+      // Create local branch
+      this.log(`Creating branch "${this.config.branch}".`)
+      this.git.checkout(this.config.branch)
+    }
+
+    // Perform actions
+    this.git.symbolicRefHead(this.config.branch)
+    this.git.reset()
+
+    if (this.config.commit.auto) {
+      this.commit()
+    }
+
+    if (this.config.tag.name()) {
+      this.tagLocalBranch()
+    }
+
+    if (this.config.push) {
+      this.push()
     }
   }
 }
