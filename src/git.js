@@ -79,7 +79,9 @@ const Git = class extends Base {
     if (remoteBranch == null) {
       remoteBranch = branch
     }
-    this.exec(`git branch --track ${branch} ${remoteName}/${remoteBranch}`, false)
+    // Attempt to track a branch from origin
+    //  It may fail on times that the branch is already tracking another remote. There is no problem when that happens, nor does it have any affect
+    this.codeExec(`git branch --track ${branch} ${remoteName}/${remoteBranch}`)
   }
 
   checkout(branch) {

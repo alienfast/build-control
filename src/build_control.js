@@ -165,8 +165,8 @@ const BuildControl = class extends Base {
   /**
    * Attempt to track a branch from origin. It may fail on times that the branch is already tracking another remote. There is no problem when that happens, nor does it have any affect
    */
-  verifyRepoBranchIsTracked() {
-    this.git.track(this.config.branch)
+  verifyProjectBranchIsTracked() {
+    this.projectGit.track(this.config.branch)
   }
 
   /**
@@ -350,7 +350,7 @@ const BuildControl = class extends Base {
 
       // Prepare
       this.checkRequirements()
-      if (this.config.remote.repo === '../') this.verifyRepoBranchIsTracked()
+      if (this.config.remote.repo === '../') this.verifyProjectBranchIsTracked()
 
       // Set up repository
       this.ensureGitInit()
