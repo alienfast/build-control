@@ -3,17 +3,16 @@ import chai from 'chai'
 import glob from 'glob'
 import path from 'path'
 import fs from 'fs-extra'
-import async from 'async'
 import childProcess from 'child_process'
 import shelljs from 'shelljs'
 //import _ from 'lodash'
 import Promise from 'bluebird'
 import fancyLog from 'fancy-log'
 import stringify from 'stringify-object'
+import extend from 'extend'
 
 let expect = chai.expect
-
-let debug = true
+let debug = false
 
 /**
  *  @callback scenarioCallback
@@ -38,7 +37,7 @@ let debug = true
  *
  * @param {scenarioCallback} assertionCallback - The callback that handles the response
  */
-let execScenario = (assertionCallback, allowErrors = false) => {
+let execScenario = (configurations, assertionCallback, allowErrors = false) => {
 
   let mockRepoDir = path.normalize(__dirname + '/mock')
   let distDir = path.join(mockRepoDir, 'repo')
@@ -52,26 +51,14 @@ let execScenario = (assertionCallback, allowErrors = false) => {
       fs.ensureDirSync(remoteDir)
       return childProcessExec('git init --bare', {cwd: remoteDir})
     })
-
-    // execute the grunt default command
     .then(() => {
-
       let originalPwd = shelljs.pwd()
       try {
         // Change working directory
         shelljs.cd(distDir)
 
-        // configurations.json should be an array of configurations
-
         // for each configuration, run an instance of BuildControl
-        let configurationsPath = `${distDir}/*.json`
         fancyLog(`\n\n\n------------------------------------------`)
-        let files = glob.sync(configurationsPath, {realpath: true})
-        if (!files || files.length <= 0) {
-          throw new Error(`Unable to find any configurations at ${configurationsPath}`)
-        }
-
-        let configurations = readConfig(files[0])
         let buildControls = []
 
         //capture the logs and verify the output
@@ -100,9 +87,8 @@ let execScenario = (assertionCallback, allowErrors = false) => {
         shelljs.cd(originalPwd)
       }
     })
-
-    // clone the "remote" into "verify/"
     .tap(() => {
+      // clone the "remote" into "verify/"
       fs.removeSync(verifyDir) // since we're cloning from `remote/` we'll just remove the folder if it exists
       return childProcessExec('git clone remote validate', {cwd: mockRepoDir})
     })
@@ -136,17 +122,6 @@ const LogCaptureBuildControl = class extends BuildControl {
   }
 }
 
-
-let readConfig = (path) => {
-  if (shelljs.test('-f', path, {silent: true})) {
-    return JSON.parse(fs.readFileSync(path, 'utf8'))
-  }
-  else {
-    throw new Error(`Unable to read configuration file ${path}`)
-  }
-}
-
-
 let childProcessExec = (command, options) => {
   return new Promise(function (resolve) {
     fancyLog(`test: ${command}`)
@@ -178,7 +153,7 @@ let assertBuildControls = (buildControls, length) => {
  * Assumptions:
  *    - each tests' current working directory has been set to `test/mock`
  */
-describe('buildcontrol', function () {
+describe('BuildControl', function () {
   this.timeout(20000)
 
 
@@ -216,7 +191,17 @@ describe('buildcontrol', function () {
 
   // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
 
+
   describe('basic deployment', function () {
+    let configurations = [
+      {
+        remote: {
+          repo: "../../remote"
+        },
+        branch: "master"
+      }
+    ]
+
     it('should have pushed a file and had the correct commit in "verify" repo', () => {
       // the current working directory is `test/mock/
       return Promise.resolve()
@@ -232,7 +217,7 @@ describe('buildcontrol', function () {
 
         // verify output from grunt
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
 
             let bc = assertBuildControls(buildControls, 1)[0]
@@ -267,29 +252,35 @@ describe('buildcontrol', function () {
   })
 
   describe('feature branch deployment', function () {
+    let configurations = [
+      {
+        remote: {
+          repo: "../../remote"
+        },
+        branch: "master",
+        connectCommits: false,
+        commit: {
+          template: "%sourceBranch%"
+        }
+      }
+    ]
     it('should contain the correct sourceBranch name', () => {
       return Promise.resolve()
-
         // Test case specific setup
         .then(() => {
           return childProcessExec('git init', {cwd: 'repo'})
         })
-
         .then(() => {
           return childProcessExec('git checkout -b feature/numbers', {cwd: 'repo'})
         })
-
         .then(() => {
           return childProcessExec('git add .', {cwd: 'repo'})
         })
-
         .then(() => {
           return childProcessExec('git commit -m "feature branch deployment"', {cwd: 'repo'})
         })
-
-        // Execute scenario
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
             let bc = assertBuildControls(buildControls, 1)[0]
             expect(bc.sourceName()).to.equal('repo') // from the parent dir name
@@ -307,15 +298,37 @@ describe('buildcontrol', function () {
   })
 
   describe('merge multiple repos', function () {
+    let configurations = [
+      {
+        remote: {
+          repo: "../../remote"
+        },
+        connectCommits: false,
+        branch: "master",
+        cwd: "setup",
+        commit: {
+          template: "setup commit"
+        }
+      },
+      {
+        remote: {
+          repo: "../../remote"
+        },
+        connectCommits: false,
+        branch: "master",
+        commit: {
+          template: "test commit"
+        }
+      }
+    ]
 
     it('merge multiple repos', () => {
-      return execScenario(function (err, stdout, stderr, buildControls) {
+      return execScenario(configurations, function (err, stdout, stderr, buildControls) {
         expect(err).to.equal(null)
         let bc = assertBuildControls(buildControls, 2)[1]
         expect(bc.sourceName()).to.equal('repo') // from the parent dir name
         expect(bc.tagName()).to.equal(false)
         //expect(bc.remoteBranchExist()).to.equal(true)
-
 
         let numberFile = fs.readFileSync('validate/numbers.txt', {encoding: 'utf8'})
         expect(numberFile).be.eql('0 1 2\n')
@@ -324,11 +337,24 @@ describe('buildcontrol', function () {
   })
 
   describe('simple deploy', function () {
-    it('should deploy multiple times with the correct commit message', () => {
 
+    let configurations = [
+      {
+        remote: {
+          repo: "../../remote"
+        },
+        branch: "master",
+        connectCommits: false,
+        commit: {
+          template: "simple deploy commit message"
+        }
+      }
+    ]
+
+    it('should deploy multiple times with the correct commit message', () => {
       return Promise.resolve()
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
             let bc = assertBuildControls(buildControls, 1)[0]
 
@@ -340,7 +366,7 @@ describe('buildcontrol', function () {
         .then(() => {
           fs.writeFileSync('repo/dist/numbers.txt', '100 200')
 
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
             expect(err).to.equal(null)
             let bc = assertBuildControls(buildControls, 1)[0]
 
@@ -356,21 +382,29 @@ describe('buildcontrol', function () {
             })
         })
     })
-
-
-    it('should not have <TOKEN> in the message', () => {
-      return execScenario(function (err, stdout, stderr, buildControls) {
-        expect(err).to.not.exist
-        expect(stdout).not.have.string('<TOKEN>')
-      })
-    })
   })
 
   describe('secure endpoint', function () {
+
+    let configurations = [
+      {
+        remote: {
+          repo: "https://github.com/pubUsername/temp.git",
+          login: "privateUsername",
+          token: "1234567890abcdef"
+        },
+        branch: "master",
+        commit: {
+          template: "secure endpoint commit message"
+        },
+        connectCommits: false
+      }
+    ]
+
     it('should mask sensitive information', () => {
       return Promise.resolve()
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
             expect(stdout).not.to.contain('privateUsername')
             expect(stdout).not.to.contain('1234567890abcdef')
             expect(stdout).to.contain('<credentials>@github.com/pubUsername/temp.git')
@@ -388,6 +422,21 @@ describe('buildcontrol', function () {
   })
 
   describe('untracked branch in src repo', function () {
+
+    let configurations = [
+      {
+        remote: {
+          repo: "../"
+        },
+        cwd: "build",
+        branch: "build",
+        connectCommits: false,
+        commit: {
+          template: "a build commit for the untracked branch scenario"
+        }
+      }
+    ]
+
     it('should track a branch in ../ if it was untracked', () => {
       return Promise.resolve()
         .then(() => {
@@ -399,7 +448,7 @@ describe('buildcontrol', function () {
           fs.writeFileSync('repo/build/hello.txt', 'hello world!')
         })
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
           })
         })
         .then(() => {
@@ -427,7 +476,7 @@ describe('buildcontrol', function () {
           fs.writeFileSync('repo/build/hello.txt', 'hello world!')
         })
         .then(() => {
-          return execScenario(function (err, stdout, stderr, buildControls) {
+          return execScenario(configurations, function (err, stdout, stderr, buildControls) {
 
           })
         })
@@ -439,94 +488,94 @@ describe('buildcontrol', function () {
     })
   })
 
-  //
-  //describe('remote urls',  function() {
-  //  function generateRemote(url, cb) {
-  //    return Promise.resolve()
-  //
-  //    // read template
-  //    let gruntfile = fs.readFileSync('repo/gruntfile.js', {encoding: 'UTF8'})
-  //
-  //    // generate template
-  //    gruntfile = _.template(gruntfile, {remoteURL: url})
-  //
-  //    // write generated gruntfile
-  //    fs.writeFileSync('repo/gruntfile.js', gruntfile)
-  //
-  //    // execute grunt command
-  //    .then(() => {
-  //      //options
-  //      GRUNT_EXEC += ' --no-color'
-  //
-  //      return childProcessExec(GRUNT_EXEC, {cwd: 'repo'}, function (err, stdout, stderr, buildControls){
-  //        // mask error because remote paths may not exist
-  //        next(null, {stdout: stdout, stderr: stderr})
-  //      })
-  //    })
-  //
-  //    // get remote url
-  //    .then(() => {
-  //      return childProcessExec('git remote -v', {cwd: 'repo/dist'}, (err, stdout) => {
-  //        next(err, stdout)
-  //      })
-  //    })
-  //
-  //    // callback
-  //    async.series(tasks, (err, results) => {
-  //      cb(err, results[1])
-  //    })
-  //  }
-  //
-  //
-  //  let shouldMatch = [
-  //    '/path/to/repo.git/',
-  //    'path/to/repo.git/',
-  //    '/path/to/repo',
-  //    //'\\\\path\\\\to\\\\repo',   // assuming works, there's a lot of escaping to be done
-  //    'path/to/repo',
-  //    'C:/user/repo',
-  //    'file:///path/to/repo.git/',
-  //    'git://github.com:kevinawoo/temp.git',
-  //    'git@github.com:kevinawoo/temp.git',
-  //    'http://git.com/path/to/repo.git/',
-  //    'https://github.com/user/repo',
-  //    'ssh://user@server/project.git',
-  //    'user@server:project.git',
-  //    '../'
-  //  ]
-  //
-  //
-  //  async.each(shouldMatch, (url) => {
-  //    it('should have created remote for: ' + url, () => {
-  //      generateRemote(url, (err, remoteURL) => {
-  //        expect(remoteURL).have.string(url)
-  //        done()
-  //      })
-  //    })
-  //  })
-  //
-  //
-  //  let shouldNotMatch = [
-  //    'origin',
-  //    'weird$1+name',
-  //    'remote_name',
-  //    'remote_name_extended',
-  //    'remote-name',
-  //    'remote.test'
-  //  ]
-  //
-  //  async.each(shouldNotMatch, (url) => {
-  //    it('should not have created remote for: ' + url, () => {
-  //      generateRemote(url, (err, remoteURL) => {
-  //        expect(remoteURL).not.have.string(url)
-  //        expect(remoteURL).be.empty
-  //        done()
-  //      })
-  //    })
-  //  })
-  //
-  //})
-  //
+  describe('remote urls', function () {
+
+    let configurations = (url) => {
+      return [
+        {
+          cwd: 'dist',
+          branch: 'master',
+          remote: {
+            repo: url
+          },
+          connectCommits: false,
+          commit: {
+            auto: false
+          },
+          push: false
+        }
+      ]
+    }
+
+    let shouldMatch = [
+      '/path/to/repo.git/',
+      'path/to/repo.git/',
+      '/path/to/repo',
+      'path/to/repo',
+      'C:/user/repo',
+      'file:///path/to/repo.git/',
+      'git://github.com:kevinawoo/temp.git',
+      'git@github.com:kevinawoo/temp.git',
+      'http://git.com/path/to/repo.git/',
+      'https://github.com/user/repo',
+      'ssh://user@server/project.git',
+      'user@server:project.git',
+      '../'
+    ]
+
+    for (let url of shouldMatch) {
+      it('should have created remote for: ' + url, () => {
+        return Promise.resolve()
+          .then(() => {
+            return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
+
+            })
+          })
+          // get remote url
+          .then(() => {
+            return childProcessExec('git remote -v', {cwd: 'repo/dist'})
+              .then((results) => {
+
+                fancyLog(`\n*******************\n${stringify(results)}`)
+
+                expect(results.stdout).to.contain(url)
+              })
+          })
+      })
+    }
+    let shouldNotMatch = [
+      'origin',
+      'weird$1+name',
+      'remote_name',
+      'remote_name_extended',
+      'remote-name',
+      'remote.test'
+    ]
+
+    for (let url of shouldNotMatch) {
+
+      it('should not have created remote for: ' + url, () => {
+
+        return Promise.resolve()
+          .then(() => {
+            return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
+
+            })
+          })
+          // get remote url
+          .then(() => {
+            return childProcessExec('git remote -v', {cwd: 'repo/dist'})
+              .then((results) => {
+
+                //fancyLog(`\n*******************\n${stringify(results)}`)
+                expect(results.stdout).not.to.contain(url)
+                expect(results.stderr).not.to.contain(url)
+              })
+          })
+      })
+    }
+  })
+
   //
   //describe('push diff branches',  function() {
   //  it('should push local:stage to stage:master and local:prod to prod:master', () => {

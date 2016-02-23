@@ -36,7 +36,6 @@ Still confused? Imagine a `basic deployment` scenario [test/scenarios/basic depl
 - Scenario directory: "scenarios/basic deployment/"
 - Source code is in "/*"
 - Deploy code is in "dist/*"
-- BuildControl configuration is loaded from `configurations.json`.  This is a test fixture pattern only, in normal usage these are passed directly into the instantiation of the class such as `new BuildControl({ /*...config...*/ })` 
 
 The test case can be found in "/test/tests.js", high level test flow:
 	- purge `mock/`
