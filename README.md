@@ -8,15 +8,15 @@ Build control using git exposed as ES2015 modules
 
 1. Install
 
-`npm install --save-dev build-control`
+    `npm install --save-dev build-control`
 
 1. Use
 
-```javascript
-  import BuildControl from 'build-control'
-  
-  new BuildControl({}).run()
-```
+    ```javascript
+    import BuildControl from 'build-control'
+    
+    new BuildControl({}).run()
+    ```
 
 ## Options
 
