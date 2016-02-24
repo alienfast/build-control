@@ -6,7 +6,21 @@ Build control using git exposed as ES2015 modules
 
 ## Usage
 
-...
+1. Install
+
+`npm install --save-dev build-control`
+
+1. Use
+
+```javascript
+  import BuildControl from 'build-control'
+  
+  new BuildControl({}).run()
+```
+
+## Options
+
+Please see the [`BuildControl` class](https://github.com/alienfast/build-control/blob/master/src/build_control.js#L11) for a list of configuration options.
 
 ## Credits
 
