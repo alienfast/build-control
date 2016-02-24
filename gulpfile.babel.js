@@ -1,5 +1,5 @@
 import gulp from 'gulp'
-import {Preset, Clean, Mocha, RollupEs, RollupCjs, EsLint, TaskSeries} from 'gulp-pipeline/src/index'
+import {PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, TaskSeries} from 'gulp-pipeline/src/index'
 
 let preset = Preset.nodeSrc()
 
@@ -16,9 +16,12 @@ let recipes = [
   rollup
 ]
 
-// FIXME eat our own dogfood and use BuildControl to produce our own builds!
 
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new TaskSeries(gulp, 'default', recipes, {debug: false})
 new TaskSeries(gulp, 'rollup', rollup)
+
+
+// FIXME eat our own dogfood and use PublishBuild to produce our own builds!
+new PublishBuild(gulp, preset, {debug: true})
 
