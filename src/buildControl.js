@@ -287,15 +287,19 @@ const BuildControl = class extends Base {
     return this._sourceBranch = this.sourceGit.sourceBranch()
   }
 
-  /**
-   * Stage and commit to a branch
-   */
-  commit() {
-    let message = this.config.commit.template
+  interpolate(template){
+    return template
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceTag%/g, this.config.tag.name())
       .replace(/%sourceCommit%/g, this.sourceCommit())
       .replace(/%sourceBranch%/g, this.sourceBranch())
+  }
+
+  /**
+   * Stage and commit to a branch
+   */
+  commit() {
+    let message = this.interpolate(this.config.commit.template)
 
     // If there are no changes, skip commit
     if (!this.git.status()) {
@@ -349,7 +353,7 @@ const BuildControl = class extends Base {
 
   run() {
     // Run task
-    this.log(`Starting ${this.sourceName()} for commit ${this.sourceCommit()} on branch ${this.sourceBranch()} using directory ${this.config.cwd}...`)
+    this.log(this.interpolate(`Starting %sourceName% for commit %sourceCommit% on branch %sourceBranch% using directory ${this.config.cwd}...`))
 
     // Prepare
     this.checkRequirements()
