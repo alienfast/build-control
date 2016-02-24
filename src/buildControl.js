@@ -280,6 +280,13 @@ const BuildControl = class extends Base {
     return this._sourceCommit = this.sourceGit.sourceCommit()
   }
 
+  sourceCommitFull() {
+    if (this._sourceCommitFull) {
+      return this._sourceCommitFull
+    }
+    return this._sourceCommitFull = this.sourceGit.sourceCommitFull()
+  }
+
   sourceBranch() {
     if (this._sourceBranch) {
       return this._sourceBranch
@@ -292,6 +299,7 @@ const BuildControl = class extends Base {
       .replace(/%sourceName%/g, this.sourceName())
       .replace(/%sourceTag%/g, this.config.tag.name())
       .replace(/%sourceCommit%/g, this.sourceCommit())
+      .replace(/%sourceCommitFull%/g, this.sourceCommitFull())
       .replace(/%sourceBranch%/g, this.sourceBranch())
   }
 

@@ -28,6 +28,10 @@ const Git = class extends Base {
     return this.exec('git rev-parse --short HEAD', false).replace(/\n/g, '')
   }
 
+  sourceCommitFull() {
+    return this.exec('git rev-parse HEAD', false).replace(/\n/g, '')
+  }
+
   init() {
     this.exec('git init')
   }
