@@ -1,4 +1,4 @@
-import BuildControl from '../src/build_control'
+import BuildControl from '../src/buildControl'
 import Paths from '../src/paths'
 import chai from 'chai'
 import glob from 'glob'

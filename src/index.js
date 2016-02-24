@@ -1,2 +1,2 @@
-export { default as BuildControl } from './build_control'
+export { default as BuildControl } from './buildControl'
 export { default as Git } from './git'
