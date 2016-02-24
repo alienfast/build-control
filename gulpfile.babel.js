@@ -16,12 +16,12 @@ let recipes = [
   rollup
 ]
 
+let publishBuild = new PublishBuild(gulp, preset, {debug: true})
 
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new TaskSeries(gulp, 'default', recipes, {debug: false})
 new TaskSeries(gulp, 'rollup', rollup)
+new TaskSeries(gulp, 'publish', recipes.concat(publishBuild), {debug: false})
 
 
-// FIXME eat our own dogfood and use PublishBuild to produce our own builds!
-new PublishBuild(gulp, preset, {debug: true})
 
