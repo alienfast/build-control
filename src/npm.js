@@ -27,7 +27,7 @@ const Npm = class extends BaseSourced {
       return
     }
 
-    if(!this.versionBump()){
+    if(!this.config.versionBump()){
       return
     }
 
