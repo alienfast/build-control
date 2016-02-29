@@ -122,8 +122,8 @@ const Git = class extends Base {
     return this.booleanExec(`git ls-remote --exit-code ${remoteName} ${branch}`)
   }
 
-  status() {
-    let result = this.exec('git status -sb --porcelain', false)
+  status(file = '') {
+    let result = this.exec(`git status -sb --porcelain ${file}`, false)
     if (result === '') {
       return null
     }

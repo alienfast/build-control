@@ -1,5 +1,6 @@
 import BaseSourced from './baseSourced'
 import Git from './git'
+import Npm from './npm'
 import Paths from './paths'
 import extend from 'extend'
 import fs from 'fs-extra'
@@ -10,6 +11,7 @@ import shelljs from 'shelljs'
 
 const Default = {
   branch: 'dist',     // The branch to commit to.
+  versionBump: 'patch',   // Will bump the versino if package.json is present https://docs.npmjs.com/cli/version.  Pass false to avoid bump.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
                       //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -78,9 +80,25 @@ const BuildControl = class extends BaseSourced {
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
 
-    this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.package = this.readPackage()
+    this.sourceGit = new Git({
+      debug: this.config.debug,
+      cwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
+
+    this.git = new Git({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      sensitive: this.config.sensitive
+    })
+
+    this.npm = new Npm({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      versionBump: this.config.versionBump,
+      sourceCwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
 
     // Ensure/initialize
     this.cleanBefore()
@@ -116,19 +134,6 @@ const BuildControl = class extends BaseSourced {
 
   resolveBranch() {
     return (this.config.remote.branch || this.config.branch)
-  }
-
-
-  readPackage() {
-    let file = path.join(this.config.sourceCwd, 'package.json')
-    if (shelljs.test('-f', file, {silent: true})) {
-      this.debug(`Found package.json at ${file}`)
-      return JSON.parse(fs.readFileSync(file, 'utf8'))
-    }
-    else {
-      this.debug(`package.json not found at ${file}`)
-      return null
-    }
   }
 
   /**
@@ -268,8 +273,8 @@ const BuildControl = class extends BaseSourced {
       return this._sourceName
     }
     else {
-      if (this.package != null) {
-        this._sourceName = this.package.name
+      if (this.npm.package() != null) {
+        this._sourceName = this.npm.package().name
       }
       else {
         this._sourceName = this.config.sourceCwd.split('/').pop()
@@ -425,11 +430,10 @@ const BuildControl = class extends BaseSourced {
 
   /**
    * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
-   * @returns {*}
    */
   autoResolveTagName() {
-    if (this.package && this.package.version) {
-      return `v${this.package.version}`
+    if (this.npm.package() && this.npm.package().version) {
+      return `v${this.npm.package().version}`
     }
     else {
       return false
@@ -466,15 +470,7 @@ const BuildControl = class extends BaseSourced {
 
     // if this was pushed to a relative path, go ahead and try and push that up to the origin
     if (!this.config.disableRelativeAutoPush && this.config.remote.repo.includes('..')) {
-
-      //// this may be a different dir than the source dir
-      //let remoteCwd = Paths.resolveCwd(this.config.cwd, this.config.remote.repo)
-      //let remoteGit = new Git({cwd: remoteCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-      //
-      //this.log(`Repo is using relative path, pushing ${branch} from the ${remoteCwd} directory...`)
-      //remoteGit.push('origin', branch)
       let remote = 'origin'
-
       this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
       this.sourceGit.push(remote, branch)
 
