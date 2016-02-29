@@ -1,4 +1,3 @@
-import Paths from './paths'
 import extend from 'extend'
 import stringify from 'stringify-object'
 import shelljs from 'shelljs'

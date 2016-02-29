@@ -1,13 +1,11 @@
 import BaseSourced from './baseSourced'
 import Git from './git'
 import Npm from './npm'
-import Paths from './paths'
 import extend from 'extend'
 import fs from 'fs-extra'
 import path from 'path'
 import url from 'url'
 import semver from 'semver'
-import shelljs from 'shelljs'
 
 const Default = {
   branch: 'dist',     // The branch to commit to.
