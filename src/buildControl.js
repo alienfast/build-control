@@ -23,7 +23,8 @@ const Default = {
     branch: undefined// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
   },
   tag: {
-    name: undefined   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
+    name: undefined,   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
+    existsFailure: false // if tag already exists, fail the executions
   },
   push: true,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
   commit: {
@@ -103,9 +104,8 @@ const BuildControl = class extends Base {
 
   /**
    *  Can run prior to tests etc to ensure versions are ready as well as commits.
-   * @param tagExistsError - if tag exists, throw an error, defaults to false.
    */
-  prepublishCheck(tagExistsError = false) {
+  prepublishCheck() {
 
     // Check if git version meets requirements
     let version = this.git.version()
@@ -129,7 +129,7 @@ const BuildControl = class extends Base {
     }
 
     // trigger message if tag exists in remote.
-    this.tagName(tagExistsError)
+    this.tagName()
   }
 
 
@@ -357,9 +357,8 @@ const BuildControl = class extends Base {
 
   /**
    * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
-   * @param tagExistsError - if tag exists, throw an error, defaults to false.
    */
-  tagName(tagExistsError = false) {
+  tagName() {
     if (this._tagName !== undefined) {
       return this._tagName
     }
@@ -382,7 +381,7 @@ const BuildControl = class extends Base {
       // If the tag exists, skip tagging
       if (name && this.tagExists(name)) {
         let msg = `The tag "${name}" already exists on ${this.config.remote.name}, skipping tagging.`
-        if (tagExistsError) {
+        if (this.config.tag.existsFailure) {
           this.notifyError(msg)
         }
         else {
