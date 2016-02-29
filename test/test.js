@@ -87,7 +87,7 @@ describe('BuildControl', function () {
             cwd: 'build',
             branch: 'build',
             remote: {repo: '../'},
-            connectCommits: true
+            commit: {ensure: true}
           }]
 
           // NOTE: we are looking direct at the fixture here, DO NOT #run()
@@ -194,7 +194,7 @@ describe('BuildControl', function () {
             repo: "../../remote"
           },
           branch: "master",
-          connectCommits: false,
+          commit: {ensure: false},
           commit: {
             template: "%sourceBranch%"
           }
@@ -239,7 +239,7 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          connectCommits: false,
+          commit: {ensure: false},
           branch: "master",
           cwd: "setup",
           commit: {
@@ -250,7 +250,7 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          connectCommits: false,
+          commit: {ensure: false},
           branch: "master",
           commit: {
             template: "test commit"
@@ -280,7 +280,7 @@ describe('BuildControl', function () {
             repo: "../../remote"
           },
           branch: "master",
-          connectCommits: false,
+          commit: {ensure: false},
           commit: {
             template: "simple deploy commit message"
           }
@@ -333,7 +333,7 @@ describe('BuildControl', function () {
           commit: {
             template: "secure endpoint commit message"
           },
-          connectCommits: false
+          commit: {ensure: false}
         }
       ]
 
@@ -366,7 +366,7 @@ describe('BuildControl', function () {
           },
           cwd: "build",
           branch: "build",
-          connectCommits: false,
+          commit: {ensure: false},
           commit: {
             template: "a build commit for the untracked branch scenario"
           }
@@ -434,7 +434,7 @@ describe('BuildControl', function () {
             remote: {
               repo: url
             },
-            connectCommits: false,
+            commit: {ensure: false},
             commit: {
               auto: false
             },
@@ -516,7 +516,7 @@ describe('BuildControl', function () {
 
       let configurations = [
         {
-          connectCommits: false,
+          commit: {ensure: false},
           remote: {
             repo: '../../stage_remote',
             branch: 'master'
@@ -525,7 +525,7 @@ describe('BuildControl', function () {
           commit: {template: 'new stage commit'}
         },
         {
-          connectCommits: false,
+          commit: {ensure: false},
           remote: {
             repo: '../../prod_remote',
             branch: 'master'
@@ -617,7 +617,7 @@ describe('BuildControl', function () {
           }
         },
         remote: {repo: '../../remote'},
-        connectCommits: false,
+        commit: {ensure: false},
         branch: 'master',
         commit: {template: 'git config deploy message'}
       }]
@@ -659,7 +659,7 @@ describe('BuildControl', function () {
           name: 'origin',
           repo: '../../remote'
         },
-        connectCommits: false,
+        commit: {ensure: false},
         branch: 'master',
         commit: {template: 'new deploy to named remote commit'}
       }]
@@ -690,7 +690,7 @@ describe('BuildControl', function () {
       let overrwrittenMessage = '(this commit should not appear in the final log)'
       let configurations = [{
         remote: {repo: '../../remote'},
-        connectCommits: false,
+        commit: {ensure: false},
         force: true,
         branch: 'master',
         commit: {template: `1st commit ${overrwrittenMessage}`}
@@ -752,7 +752,7 @@ describe('BuildControl', function () {
         cwd: 'build',
         branch: 'build',
         remote: {repo: '../'},
-        connectCommits: true
+        commit: {ensure: true}
       }]
 
       it('should not be able to deploy if there is uncommitted files', () => {

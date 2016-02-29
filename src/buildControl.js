@@ -36,9 +36,9 @@ const Default = {
     //    - %sourceTag%: the current tag i.e. v1.0.0
     //    - %sourceBranch%: the current branch
     //    - %sourceCommit%: the most recent commit
-    template: `Built %sourceName% %sourceTag% from commit %sourceCommit% on branch %sourceBranch%`
+    template: `Built %sourceName% %sourceTag% from commit %sourceCommit% on branch %sourceBranch%`,
+    ensure: true // require the source and build to be fully committed prior to running.
   },
-  connectCommits: true,// Make sure that every commit on the built code branch matches a commit on the main project branch. If the main project's working directory has uncommitted changes, a commit task will throw an error.
   fetch: {
     shallow: false    // Fetches branch from remote with the flag --depth=1. Which makes a shallow clone with a history truncated to the last revision. Might bring some boost on long-history repositories.
   },
@@ -106,6 +106,14 @@ const BuildControl = class extends Base {
    *  Can run prior to tests etc to ensure versions are ready as well as commits.
    */
   prepublishCheck() {
+    if (this.config.remote.repo === '../') {
+      this.verifySourceBranchIsTracked()
+    }
+
+    // Set up repository
+    this.ensureGitInit()
+    this.configureGit()
+    this.ensureRemote()
 
     // Check if git version meets requirements
     let version = this.git.version()
@@ -113,15 +121,10 @@ const BuildControl = class extends Base {
       throw(`Current Git version is ${version}. This plugin requires Git >= 1.8.0.`)
     }
 
-    // If connectCommits is true check that the main project's working directory is clean
-    if (this.config.connectCommits) {
-      let diff = this.git.diff()
-      if (diff !== '') {
-        this.notifyError('There are uncommitted changes in your working directory. Please commit changes to the project before you run BuildControl.')
-      }
-      else {
-        this.debug(`No diffs found.`)
-      }
+    // If config.commit.ensure is true check that the main project's working directory is clean
+    if (this.config.commit.ensure) {
+      this.git.ensureCommitted()
+      this.sourceGit.ensureCommitted()
     }
 
     if (this.config.fetch.shallow && semver.lt(version, '1.9.0')) {
@@ -380,12 +383,12 @@ const BuildControl = class extends Base {
 
       // If the tag exists, skip tagging
       if (name && this.tagExists(name)) {
-        let msg = `The tag "${name}" already exists on ${this.config.remote.name}, skipping tagging.`
+        let msg = `The tag "${name}" already exists on ${this.config.remote.name}`
         if (this.config.tag.existsFailure) {
           this.notifyError(msg)
         }
         else {
-          this.log(`WARNING: ${msg}`)
+          this.log(`WARNING: ${msg}, skipping tagging.`)
         }
 
         name = false
@@ -453,13 +456,6 @@ const BuildControl = class extends Base {
 
     // Prepare
     this.prepublishBuildCheck()
-
-    if (this.config.remote.repo === '../') this.verifySourceBranchIsTracked()
-
-    // Set up repository
-    this.ensureGitInit()
-    this.configureGit()
-    this.ensureRemote()
 
     // Set up local branch
     let localBranchExists = this.localBranchExists()

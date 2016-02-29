@@ -20,6 +20,16 @@ const Git = class extends Base {
     return this.exec('git diff', true)
   }
 
+  ensureCommitted(){
+    let diff = this.diff()
+    if (diff !== '') {
+      this.notifyError(`There are uncommitted changes in your working directory ${this.config.cwd}. Please commit the changes first.`)
+    }
+    else {
+      this.debug(`No diffs (uncommitted changes) found.`)
+    }
+  }
+
   sourceBranch() {
     return this.exec('git rev-parse --abbrev-ref HEAD', false).replace(/\n/g, '')
   }
