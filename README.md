@@ -30,7 +30,7 @@ Build control using git exposed as ES2015 modules
 
 1. Use with [gulp-pipeline](https://github.com/alienfast/gulp-pipeline)
 
-See [this project's `gulpfile.babel.js`](blob/master/gulpfile.babel.js) for a full example.
+  See [this project's `gulpfile.babel.js`](blob/master/gulpfile.babel.js) for a full example.
 
   1. `gulpfile.babel.js`
 
