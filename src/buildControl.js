@@ -31,6 +31,7 @@ const Default = {
     existsFailure: false // if tag already exists, fail the executions
   },
   push: true,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
+  disableRelativeAutoPush: false, // when testing, we may have nothing to push to.  By default, if using a remote repo that is relative, will try to push using the config.branch using the sourceGit all the way to the server.
   commit: {
     auto: true,      // Commits built code to `branch`. A new commit is only created if the built code has changed. false will disable
 
@@ -101,7 +102,7 @@ const BuildControl = class extends Base {
     this.ensureRemote()
   }
 
-  ensureDir(){
+  ensureDir() {
     // reestablish a build dir
     fs.ensureDirSync(this.config.cwd)
   }
@@ -192,7 +193,7 @@ const BuildControl = class extends Base {
       this.log(`Creating git repository in ${this.config.cwd}.`)
       this.git.init()
     }
-    else{
+    else {
       this.debug(`Git repo already exists in ${this.config.cwd}.`)
     }
   }
@@ -471,7 +472,15 @@ const BuildControl = class extends Base {
     }
 
     // if this was pushed to a relative path, go ahead and try and push that up to the origin
-    if(this.config.remote.repo.includes('..')){
+    if (!this.config.disableRelativeAutoPush && this.config.remote.repo.includes('..')) {
+
+      //// this may be a different dir than the source dir
+      //let remoteCwd = Paths.resolveCwd(this.config.cwd, this.config.remote.repo)
+      //let remoteGit = new Git({cwd: remoteCwd, debug: this.config.debug, sensitive: this.config.sensitive})
+      //
+      //this.log(`Repo is using relative path, pushing ${branch} from the ${remoteCwd} directory...`)
+      //remoteGit.push('origin', branch)
+
       this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
       this.sourceGit.push('origin', branch)
     }

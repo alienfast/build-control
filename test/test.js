@@ -138,7 +138,8 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          branch: 'master'
+          branch: 'master',
+          disableRelativeAutoPush: true
         }
       ]
 

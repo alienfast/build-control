@@ -17,7 +17,7 @@ let recipes = [
 ]
 
 let buildControlConfig = {
-  debug: true,
+  debug: false,
   options: {
     tag: {
       existsFailure: false
