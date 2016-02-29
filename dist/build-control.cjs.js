@@ -11855,7 +11855,7 @@ var BuildControl = function (_BaseSourced) {
         this.sourceGit.push(remote, branch);
 
         if (this.tagName()) {
-          this.source.pushTag(remote, this.tagName());
+          this.sourceGit.pushTag(remote, this.tagName());
         }
       }
     }

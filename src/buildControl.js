@@ -473,7 +473,7 @@ const BuildControl = class extends BaseSourced {
       this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.source.pushTag(remote, this.tagName())
+        this.sourceGit.pushTag(remote, this.tagName())
       }
     }
   }
