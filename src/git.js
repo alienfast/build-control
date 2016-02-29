@@ -132,8 +132,8 @@ const Git = class extends Base {
     }
   }
 
-  add() {
-    this.exec('git add -A .')
+  add(file = `.`) {
+    this.exec(`git add -A ${file}`)
   }
 
   hash(prefix, text) {

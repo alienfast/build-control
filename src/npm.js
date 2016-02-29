@@ -38,6 +38,7 @@ const Npm = class extends BaseSourced {
     this._package = null
 
     let toVersion = this.package().version
+    this.sourceGit.add('package.json')
     this.sourceGit.commit(`Bumped version from ${fromVersion} to ${toVersion}`)
   }
 
