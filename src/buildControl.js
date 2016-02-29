@@ -1,17 +1,15 @@
-import Base from './base'
+import BaseSourced from './baseSourced'
 import Git from './git'
-import Paths from './paths'
+import Npm from './npm'
 import extend from 'extend'
 import fs from 'fs-extra'
 import path from 'path'
 import url from 'url'
 import semver from 'semver'
-import shelljs from 'shelljs'
 
 const Default = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
-  cwd: 'dist',        // The directory that contains your built code.
   branch: 'dist',     // The branch to commit to.
+  versionBump: 'patch',   // Will bump the versino if package.json is present https://docs.npmjs.com/cli/version.  Pass false to avoid bump.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
                       //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -53,7 +51,7 @@ const Default = {
   force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
-const BuildControl = class extends Base {
+const BuildControl = class extends BaseSourced {
 
   constructor(config = {}) {
     super(extend(true, {},
@@ -80,14 +78,25 @@ const BuildControl = class extends Base {
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
 
-    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
-    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
-    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
-    this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
+    this.sourceGit = new Git({
+      debug: this.config.debug,
+      cwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
 
-    this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.package = this.readPackage()
+    this.git = new Git({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      sensitive: this.config.sensitive
+    })
+
+    this.npm = new Npm({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      versionBump: this.config.versionBump,
+      sourceCwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
 
     // Ensure/initialize
     this.cleanBefore()
@@ -123,19 +132,6 @@ const BuildControl = class extends Base {
 
   resolveBranch() {
     return (this.config.remote.branch || this.config.branch)
-  }
-
-
-  readPackage() {
-    let file = path.join(this.config.sourceCwd, 'package.json')
-    if (shelljs.test('-f', file, {silent: true})) {
-      this.debug(`Found package.json at ${file}`)
-      return JSON.parse(fs.readFileSync(file, 'utf8'))
-    }
-    else {
-      this.debug(`package.json not found at ${file}`)
-      return null
-    }
   }
 
   /**
@@ -275,8 +271,8 @@ const BuildControl = class extends Base {
       return this._sourceName
     }
     else {
-      if (this.package != null) {
-        this._sourceName = this.package.name
+      if (this.npm.package() != null) {
+        this._sourceName = this.npm.package().name
       }
       else {
         this._sourceName = this.config.sourceCwd.split('/').pop()
@@ -432,11 +428,10 @@ const BuildControl = class extends Base {
 
   /**
    * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
-   * @returns {*}
    */
   autoResolveTagName() {
-    if (this.package && this.package.version) {
-      return `v${this.package.version}`
+    if (this.npm.package() && this.npm.package().version) {
+      return `v${this.npm.package().version}`
     }
     else {
       return false
@@ -473,20 +468,12 @@ const BuildControl = class extends Base {
 
     // if this was pushed to a relative path, go ahead and try and push that up to the origin
     if (!this.config.disableRelativeAutoPush && this.config.remote.repo.includes('..')) {
-
-      //// this may be a different dir than the source dir
-      //let remoteCwd = Paths.resolveCwd(this.config.cwd, this.config.remote.repo)
-      //let remoteGit = new Git({cwd: remoteCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-      //
-      //this.log(`Repo is using relative path, pushing ${branch} from the ${remoteCwd} directory...`)
-      //remoteGit.push('origin', branch)
       let remote = 'origin'
-
       this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
       this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.sourceGit.pushTag(remote, this.tagName())
+        this.source.pushTag(remote, this.tagName())
       }
     }
   }

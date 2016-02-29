@@ -3227,9 +3227,10 @@ var index$11 = __commonjs(function (module) {
 
 var fancyLog = index$11 && (typeof index$11 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$11)) === 'object' && 'default' in index$11 ? index$11['default'] : index$11;
 
-var Default$1 = {
+var Default$2 = {
   debug: false,
-  sensitive: {}
+  sensitive: {},
+  cwd: 'dist' // The directory that contains your built code.
 };
 
 var Base = function () {
@@ -3242,10 +3243,9 @@ var Base = function () {
   function Base(config) {
     babelHelpers.classCallCheck(this, Base);
 
-    this.config = extend(true, {}, Default$1, config);
+    this.config = extend(true, {}, Default$2, config);
 
-    // TODO: tests override #log and we need to complete construction before logging....not sure how to make that happen, setTimeout is hokey and doesn't work right
-    //this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
+    this.debug('[' + this.constructor.name + '] using resolved config: ' + stringify(this.config));
   }
 
   // ----------------------------------------------
@@ -3408,7 +3408,77 @@ var Base = function () {
   return Base;
 }();
 
-var Default$2 = {};
+var index$13 = __commonjs(function (module) {
+	'use strict';
+
+	function posix(path) {
+		return path.charAt(0) === '/';
+	};
+
+	function win32(path) {
+		// https://github.com/joyent/node/blob/b3fcc245fb25539909ef1d5eaa01dbf92e168633/lib/path.js#L56
+		var splitDeviceRe = /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
+		var result = splitDeviceRe.exec(path);
+		var device = result[1] || '';
+		var isUnc = !!device && device.charAt(1) !== ':';
+
+		// UNC paths are always absolute
+		return !!result[2] || isUnc;
+	};
+
+	module.exports = process.platform === 'win32' ? win32 : posix;
+	module.exports.posix = posix;
+	module.exports.win32 = win32;
+});
+
+var require$$1$7 = index$13 && (typeof index$13 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$13)) === 'object' && 'default' in index$13 ? index$13['default'] : index$13;
+
+var Paths = function () {
+  function Paths() {
+    babelHelpers.classCallCheck(this, Paths);
+  }
+
+  babelHelpers.createClass(Paths, null, [{
+    key: 'resolveCwd',
+    value: function resolveCwd(base, cwd) {
+      if (!require$$1$7(cwd)) {
+        return require$$2.join(base, cwd);
+      } else {
+        return cwd;
+      }
+    }
+  }]);
+  return Paths;
+}();
+
+var Default$1 = {
+  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
+  cwd: 'dist' // The directory that contains your built code.
+};
+
+var BaseSourced = function (_Base) {
+  babelHelpers.inherits(BaseSourced, _Base);
+
+  function BaseSourced() {
+    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    babelHelpers.classCallCheck(this, BaseSourced);
+
+
+    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
+
+    var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(BaseSourced).call(this, extend(true, {}, Default$1, config)));
+
+    _this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), _this.config.sourceCwd);
+
+    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
+    _this.config.cwd = Paths.resolveCwd(_this.config.sourceCwd, _this.config.cwd);
+    return _this;
+  }
+
+  return BaseSourced;
+}(Base);
+
+var Default$3 = {};
 
 var Git = function (_Base) {
   babelHelpers.inherits(Git, _Base);
@@ -3416,7 +3486,7 @@ var Git = function (_Base) {
   function Git() {
     var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
     babelHelpers.classCallCheck(this, Git);
-    return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Git).call(this, extend(true, {}, Default$2, config)));
+    return babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Git).call(this, extend(true, {}, Default$3, config)));
   }
 
   babelHelpers.createClass(Git, [{
@@ -3562,7 +3632,9 @@ var Git = function (_Base) {
   }, {
     key: 'status',
     value: function status() {
-      var result = this.exec('git status -sb --porcelain', false);
+      var file = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+
+      var result = this.exec('git status -sb --porcelain ' + file, false);
       if (result === '') {
         return null;
       } else {
@@ -3572,7 +3644,9 @@ var Git = function (_Base) {
   }, {
     key: 'add',
     value: function add() {
-      this.exec('git add -A .');
+      var file = arguments.length <= 0 || arguments[0] === undefined ? '.' : arguments[0];
+
+      this.exec('git add -A ' + file);
     }
   }, {
     key: 'hash',
@@ -3617,49 +3691,6 @@ var Git = function (_Base) {
   }]);
   return Git;
 }(Base);
-
-var index$13 = __commonjs(function (module) {
-	'use strict';
-
-	function posix(path) {
-		return path.charAt(0) === '/';
-	};
-
-	function win32(path) {
-		// https://github.com/joyent/node/blob/b3fcc245fb25539909ef1d5eaa01dbf92e168633/lib/path.js#L56
-		var splitDeviceRe = /^([a-zA-Z]:|[\\\/]{2}[^\\\/]+[\\\/]+[^\\\/]+)?([\\\/])?([\s\S]*?)$/;
-		var result = splitDeviceRe.exec(path);
-		var device = result[1] || '';
-		var isUnc = !!device && device.charAt(1) !== ':';
-
-		// UNC paths are always absolute
-		return !!result[2] || isUnc;
-	};
-
-	module.exports = process.platform === 'win32' ? win32 : posix;
-	module.exports.posix = posix;
-	module.exports.win32 = win32;
-});
-
-var require$$1$7 = index$13 && (typeof index$13 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$13)) === 'object' && 'default' in index$13 ? index$13['default'] : index$13;
-
-var Paths = function () {
-  function Paths() {
-    babelHelpers.classCallCheck(this, Paths);
-  }
-
-  babelHelpers.createClass(Paths, null, [{
-    key: 'resolveCwd',
-    value: function resolveCwd(base, cwd) {
-      if (!require$$1$7(cwd)) {
-        return require$$2.join(base, cwd);
-      } else {
-        return cwd;
-      }
-    }
-  }]);
-  return Paths;
-}();
 
 var assign = __commonjs(function (module) {
   // simple mutable assign (extracted from fs-extra)
@@ -8760,6 +8791,90 @@ var index$14 = __commonjs(function (module) {
 
 var fs = index$14 && (typeof index$14 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$14)) === 'object' && 'default' in index$14 ? index$14['default'] : index$14;
 
+var Default$4 = {};
+
+var Npm = function (_BaseSourced) {
+  babelHelpers.inherits(Npm, _BaseSourced);
+
+  function Npm() {
+    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    babelHelpers.classCallCheck(this, Npm);
+
+    var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(Npm).call(this, extend(true, {}, Default$4, config)));
+
+    _this.sourceGit = new Git({ cwd: _this.config.sourceCwd, debug: _this.config.debug, sensitive: _this.config.sensitive });
+    return _this;
+  }
+
+  babelHelpers.createClass(Npm, [{
+    key: 'publish',
+    value: function publish() {
+      if (!this.hasPackage()) {
+        return;
+      }
+
+      this.exec('npm publish');
+    }
+  }, {
+    key: 'bump',
+    value: function bump() {
+      if (!this.hasPackage()) {
+        return;
+      }
+
+      if (!this.config.versionBump) {
+        return;
+      }
+
+      this.sourceGit.ensureCommitted();
+
+      var fromVersion = this.package().version;
+      this.exec('npm --no-git-tag-version version ' + this.config.versionBump);
+      this._package = null;
+
+      var toVersion = this.package().version;
+      this.sourceGit.add('package.json');
+      this.sourceGit.commit('Bumped version from ' + fromVersion + ' to ' + toVersion);
+    }
+  }, {
+    key: 'package',
+    value: function _package() {
+      if (this._package) {
+        return this._package;
+      } else {
+        return this._package = this.readPackage();
+      }
+    }
+  }, {
+    key: 'packageFile',
+    value: function packageFile() {
+      return require$$2.join(this.config.sourceCwd, 'package.json');
+    }
+  }, {
+    key: 'hasPackage',
+    value: function hasPackage() {
+      var file = this.packageFile();
+      if (shelljs.test('-f', file, { silent: true })) {
+        this.debug('Found package.json at ' + file);
+        return true;
+      } else {
+        this.debug('package.json not found at ' + file);
+        return false;
+      }
+    }
+  }, {
+    key: 'readPackage',
+    value: function readPackage() {
+      if (this.hasPackage()) {
+        return JSON.parse(fs.readFileSync(this.packageFile(), 'utf8'));
+      } else {
+        return null;
+      }
+    }
+  }]);
+  return Npm;
+}(BaseSourced);
+
 var encode$1 = __commonjs(function (module) {
   // Copyright Joyent, Inc. and other Node contributors.
   //
@@ -11222,9 +11337,8 @@ var semver = __commonjs(function (module, exports) {
 var semver$1 = semver && (typeof semver === 'undefined' ? 'undefined' : babelHelpers.typeof(semver)) === 'object' && 'default' in semver ? semver['default'] : semver;
 
 var Default = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
-  cwd: 'dist', // The directory that contains your built code.
   branch: 'dist', // The branch to commit to.
+  versionBump: 'patch', // Will bump the versino if package.json is present https://docs.npmjs.com/cli/version.  Pass false to avoid bump.
   remote: {
     repo: '../', // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
     //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -11266,8 +11380,8 @@ var Default = {
   force: false // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 };
 
-var BuildControl = function (_Base) {
-  babelHelpers.inherits(BuildControl, _Base);
+var BuildControl = function (_BaseSourced) {
+  babelHelpers.inherits(BuildControl, _BaseSourced);
 
   function BuildControl() {
     var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -11298,14 +11412,25 @@ var BuildControl = function (_Base) {
       _this.config.sensitive[_this.config.remote.token] = '<token>';
     }
 
-    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
-    _this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), _this.config.sourceCwd);
-    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
-    _this.config.cwd = Paths.resolveCwd(_this.config.sourceCwd, _this.config.cwd);
+    _this.sourceGit = new Git({
+      debug: _this.config.debug,
+      cwd: _this.config.sourceCwd,
+      sensitive: _this.config.sensitive
+    });
 
-    _this.sourceGit = new Git({ cwd: _this.config.sourceCwd, debug: _this.config.debug, sensitive: _this.config.sensitive });
-    _this.git = new Git({ cwd: _this.config.cwd, debug: _this.config.debug, sensitive: _this.config.sensitive });
-    _this.package = _this.readPackage();
+    _this.git = new Git({
+      debug: _this.config.debug,
+      cwd: _this.config.cwd,
+      sensitive: _this.config.sensitive
+    });
+
+    _this.npm = new Npm({
+      debug: _this.config.debug,
+      cwd: _this.config.cwd,
+      versionBump: _this.config.versionBump,
+      sourceCwd: _this.config.sourceCwd,
+      sensitive: _this.config.sensitive
+    });
 
     // Ensure/initialize
     _this.cleanBefore();
@@ -11347,18 +11472,6 @@ var BuildControl = function (_Base) {
     key: 'resolveBranch',
     value: function resolveBranch() {
       return this.config.remote.branch || this.config.branch;
-    }
-  }, {
-    key: 'readPackage',
-    value: function readPackage() {
-      var file = require$$2.join(this.config.sourceCwd, 'package.json');
-      if (shelljs.test('-f', file, { silent: true })) {
-        this.debug('Found package.json at ' + file);
-        return JSON.parse(fs.readFileSync(file, 'utf8'));
-      } else {
-        this.debug('package.json not found at ' + file);
-        return null;
-      }
     }
 
     /**
@@ -11538,8 +11651,8 @@ var BuildControl = function (_Base) {
       if (this._sourceName) {
         return this._sourceName;
       } else {
-        if (this.package != null) {
-          this._sourceName = this.package.name;
+        if (this.npm.package() != null) {
+          this._sourceName = this.npm.package().name;
         } else {
           this._sourceName = this.config.sourceCwd.split('/').pop();
         }
@@ -11692,14 +11805,13 @@ var BuildControl = function (_Base) {
 
     /**
      * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
-     * @returns {*}
      */
 
   }, {
     key: 'autoResolveTagName',
     value: function autoResolveTagName() {
-      if (this.package && this.package.version) {
-        return 'v' + this.package.version;
+      if (this.npm.package() && this.npm.package().version) {
+        return 'v' + this.npm.package().version;
       } else {
         return false;
       }
@@ -11738,20 +11850,12 @@ var BuildControl = function (_Base) {
 
       // if this was pushed to a relative path, go ahead and try and push that up to the origin
       if (!this.config.disableRelativeAutoPush && this.config.remote.repo.includes('..')) {
-
-        //// this may be a different dir than the source dir
-        //let remoteCwd = Paths.resolveCwd(this.config.cwd, this.config.remote.repo)
-        //let remoteGit = new Git({cwd: remoteCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-        //
-        //this.log(`Repo is using relative path, pushing ${branch} from the ${remoteCwd} directory...`)
-        //remoteGit.push('origin', branch)
         var remote = 'origin';
-
         this.log('Repo is using relative path, pushing ' + branch + ' from the source directory...');
         this.sourceGit.push(remote, branch);
 
         if (this.tagName()) {
-          this.sourceGit.pushTag(remote, this.tagName());
+          this.source.pushTag(remote, this.tagName());
         }
       }
     }
@@ -11811,7 +11915,7 @@ var BuildControl = function (_Base) {
     }
   }]);
   return BuildControl;
-}(Base);
+}(BaseSourced);
 
 exports.BuildControl = BuildControl;
 exports.Git = Git;

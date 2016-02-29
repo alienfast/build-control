@@ -3,17 +3,18 @@ import stringify from 'stringify-object';
 import shelljs from 'shelljs';
 import chalk from 'chalk';
 import fancyLog from 'fancy-log';
-import fs from 'fs';
-import crypto from 'crypto';
 import path from 'path';
 import pathIsAbsolute from 'path-is-absolute';
+import fs from 'fs';
+import crypto from 'crypto';
 import fs$1 from 'fs-extra';
 import url from 'url';
 import semver from 'semver';
 
-const Default$1 = {
+const Default$2 = {
   debug: false,
-  sensitive: {}
+  sensitive: {},
+  cwd: 'dist'        // The directory that contains your built code.
 }
 
 const Base = class {
@@ -23,10 +24,9 @@ const Base = class {
    * @param config - customized overrides
    */
   constructor(config) {
-    this.config = extend(true, {}, Default$1, config)
+    this.config = extend(true, {}, Default$2, config)
 
-    // TODO: tests override #log and we need to complete construction before logging....not sure how to make that happen, setTimeout is hokey and doesn't work right
-    //this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
+    this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
 
   // ----------------------------------------------
@@ -151,12 +151,42 @@ const Base = class {
   }
 }
 
-const Default$2 = {}
+const Paths = class {
+
+  static resolveCwd(base, cwd) {
+    if (!pathIsAbsolute(cwd)) {
+      return path.join(base, cwd)
+    }
+    else {
+      return cwd
+    }
+  }
+}
+
+const Default$1 = {
+  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
+  cwd: 'dist'        // The directory that contains your built code.
+}
+
+const BaseSourced = class extends Base {
+
+  constructor(config = {}) {
+    super(extend(true, {}, Default$1, config))
+
+    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
+    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
+
+    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
+    this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
+  }
+}
+
+const Default$3 = {}
 
 const Git = class extends Base {
 
   constructor(config = {}) {
-    super(extend(true, {}, Default$2, config))
+    super(extend(true, {}, Default$3, config))
   }
 
   version() {
@@ -269,8 +299,8 @@ const Git = class extends Base {
     return this.booleanExec(`git ls-remote --exit-code ${remoteName} ${branch}`)
   }
 
-  status() {
-    let result = this.exec('git status -sb --porcelain', false)
+  status(file = '') {
+    let result = this.exec(`git status -sb --porcelain ${file}`, false)
     if (result === '') {
       return null
     }
@@ -279,8 +309,8 @@ const Git = class extends Base {
     }
   }
 
-  add() {
-    this.exec('git add -A .')
+  add(file = `.`) {
+    this.exec(`git add -A ${file}`)
   }
 
   hash(prefix, text) {
@@ -316,22 +346,81 @@ const Git = class extends Base {
   }
 }
 
-const Paths = class {
+const Default$4 = {}
 
-  static resolveCwd(base, cwd) {
-    if (!pathIsAbsolute(cwd)) {
-      return path.join(base, cwd)
+const Npm = class extends BaseSourced {
+
+  constructor(config = {}) {
+    super(extend(true, {}, Default$4, config))
+    this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
+  }
+
+  publish() {
+    if(!this.hasPackage()){
+      return
+    }
+
+    this.exec('npm publish')
+  }
+
+  bump() {
+    if(!this.hasPackage()){
+      return
+    }
+
+    if(!this.config.versionBump){
+      return
+    }
+
+    this.sourceGit.ensureCommitted()
+
+    let fromVersion = this.package().version
+    this.exec(`npm --no-git-tag-version version ${this.config.versionBump}`)
+    this._package = null
+
+    let toVersion = this.package().version
+    this.sourceGit.add('package.json')
+    this.sourceGit.commit(`Bumped version from ${fromVersion} to ${toVersion}`)
+  }
+
+  package() {
+    if (this._package) {
+      return this._package
     }
     else {
-      return cwd
+      return this._package = this.readPackage()
+    }
+  }
+
+  packageFile(){
+    return path.join(this.config.sourceCwd, 'package.json')
+  }
+
+  hasPackage(){
+    let file = this.packageFile()
+    if (shelljs.test('-f', file, {silent: true})) {
+      this.debug(`Found package.json at ${file}`)
+      return true
+    }
+    else {
+      this.debug(`package.json not found at ${file}`)
+      return false
+    }
+  }
+
+  readPackage() {
+    if (this.hasPackage()) {
+      return JSON.parse(fs$1.readFileSync(this.packageFile(), 'utf8'))
+    }
+    else {
+      return null
     }
   }
 }
 
 const Default = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
-  cwd: 'dist',        // The directory that contains your built code.
   branch: 'dist',     // The branch to commit to.
+  versionBump: 'patch',   // Will bump the versino if package.json is present https://docs.npmjs.com/cli/version.  Pass false to avoid bump.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
                       //   - `git@github.com:alienfast/foo.git` - your main project's remote (gh-pages branch)
@@ -373,7 +462,7 @@ const Default = {
   force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
-const BuildControl = class extends Base {
+const BuildControl = class extends BaseSourced {
 
   constructor(config = {}) {
     super(extend(true, {},
@@ -400,14 +489,25 @@ const BuildControl = class extends Base {
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
 
-    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
-    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
-    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
-    this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
+    this.sourceGit = new Git({
+      debug: this.config.debug,
+      cwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
 
-    this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
-    this.package = this.readPackage()
+    this.git = new Git({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      sensitive: this.config.sensitive
+    })
+
+    this.npm = new Npm({
+      debug: this.config.debug,
+      cwd: this.config.cwd,
+      versionBump: this.config.versionBump,
+      sourceCwd: this.config.sourceCwd,
+      sensitive: this.config.sensitive
+    })
 
     // Ensure/initialize
     this.cleanBefore()
@@ -443,19 +543,6 @@ const BuildControl = class extends Base {
 
   resolveBranch() {
     return (this.config.remote.branch || this.config.branch)
-  }
-
-
-  readPackage() {
-    let file = path.join(this.config.sourceCwd, 'package.json')
-    if (shelljs.test('-f', file, {silent: true})) {
-      this.debug(`Found package.json at ${file}`)
-      return JSON.parse(fs$1.readFileSync(file, 'utf8'))
-    }
-    else {
-      this.debug(`package.json not found at ${file}`)
-      return null
-    }
   }
 
   /**
@@ -595,8 +682,8 @@ const BuildControl = class extends Base {
       return this._sourceName
     }
     else {
-      if (this.package != null) {
-        this._sourceName = this.package.name
+      if (this.npm.package() != null) {
+        this._sourceName = this.npm.package().name
       }
       else {
         this._sourceName = this.config.sourceCwd.split('/').pop()
@@ -752,11 +839,10 @@ const BuildControl = class extends Base {
 
   /**
    * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
-   * @returns {*}
    */
   autoResolveTagName() {
-    if (this.package && this.package.version) {
-      return `v${this.package.version}`
+    if (this.npm.package() && this.npm.package().version) {
+      return `v${this.npm.package().version}`
     }
     else {
       return false
@@ -793,20 +879,12 @@ const BuildControl = class extends Base {
 
     // if this was pushed to a relative path, go ahead and try and push that up to the origin
     if (!this.config.disableRelativeAutoPush && this.config.remote.repo.includes('..')) {
-
-      //// this may be a different dir than the source dir
-      //let remoteCwd = Paths.resolveCwd(this.config.cwd, this.config.remote.repo)
-      //let remoteGit = new Git({cwd: remoteCwd, debug: this.config.debug, sensitive: this.config.sensitive})
-      //
-      //this.log(`Repo is using relative path, pushing ${branch} from the ${remoteCwd} directory...`)
-      //remoteGit.push('origin', branch)
       let remote = 'origin'
-
       this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
       this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.sourceGit.pushTag(remote, this.tagName())
+        this.source.pushTag(remote, this.tagName())
       }
     }
   }

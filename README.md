@@ -1,6 +1,6 @@
 # build-control
 
-[`v0.3.0`](../../releases/tag/v0.3.0) built from commit [`0aa2fc3`](../../commit/0aa2fc329339d6b8895e9cfb2df2a77905ecb847) on branch `master`
+[`v0.3.1`](../../releases/tag/v0.3.1) built from commit [`470baba`](../../commit/470babac8c93611b0460665f2ddde0fe323e4ae3) on branch `master`
 
 ---
 <sup>Built and published by [gulp-pipeline](https://github.com/alienfast/gulp-pipeline) using [build-control](https://github.com/alienfast/build-control)</sup>
