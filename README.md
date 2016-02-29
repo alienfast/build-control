@@ -2,8 +2,6 @@
 
 Build control using git exposed as ES2015 modules
 
-**WORK IN PROGRESS**
-
 ## Usage
 
 1. Install
@@ -15,7 +13,13 @@ Build control using git exposed as ES2015 modules
     ```javascript
     import BuildControl from 'build-control'
     
-    new BuildControl({}).run()
+    let bc = new BuildControl({})
+    
+    // check before a long test run
+    bc.prepublishCheck()
+    
+    // run it 
+    bc.run()
     ```
 
 ## Options

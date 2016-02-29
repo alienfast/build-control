@@ -37,6 +37,26 @@ const PATH_MOCK_VALIDATE = path.join(PATH_MOCK, 'validate')
 const PATH_MOCK_REMOTE = path.join(PATH_MOCK, 'remote')
 const PATH_MOCK_REPO_DIST = path.join(PATH_MOCK_REPO, 'dist')
 
+const prepareScenario = (from, to = PATH_MOCK) => {
+  // clean testing folder `test/mock`
+  fs.removeSync(to)
+  fs.ensureDirSync(to)
+
+  try {
+    fancyLog(`Copying from ${from} to ${to}...`)
+    // copy scenario to `test/mock`
+    fs.copySync(from, to)
+  }
+  catch (err) {
+    if (err && err.code === 'ENOENT') {
+      throw new Error(`Could not find scenario ${from}`)
+    }
+
+    throw new Error(err)
+  }
+
+  return to
+}
 
 /**
  * Tests
@@ -57,13 +77,14 @@ describe('BuildControl', function () {
       // the current working directory is `test/mock/
       return Promise.resolve()
         .then(() => {
-          let scenarioCwd = path.join(scenarioPath('basic deployment'), 'repo')
+          let to = prepareScenario(scenarioPath('basic deployment'))
+          let scenarioCwd = path.join(to, 'repo')
           let configurations = [{
             sourceCwd: scenarioCwd,
             remote: {
               repo: "../../remote"
             },
-            branch: "master"
+            branch: 'master'
           }]
 
           let buildControls = buildConfigurations(configurations, false)
@@ -81,7 +102,8 @@ describe('BuildControl', function () {
       // the current working directory is `test/mock/
       return Promise.resolve()
         .then(() => {
-          let scenarioCwd = path.join(scenarioPath('connect commits'), 'repo')
+          let to = prepareScenario(scenarioPath('connect commits'))
+          let scenarioCwd = path.join(to, 'repo')
           let configurations = [{
             sourceCwd: scenarioCwd,
             cwd: 'build',
@@ -104,31 +126,10 @@ describe('BuildControl', function () {
   })
 
   describe('scenarios', function () {
-
     beforeEach(function (done) {
-      let from = scenarioPath(this.currentTest.parent.title)
-      let to = PATH_MOCK
-
-      // clean testing folder `test/mock`
-      fs.removeSync(to)
-      fs.ensureDirSync(to)
-
-      try {
-        fancyLog(`Copying from ${from} to ${to}...`)
-        // copy scenario to `test/mock`
-        fs.copySync(from, to)
-
-        done()
-      }
-      catch (err) {
-        if (err && err.code === 'ENOENT') {
-          throw new Error(`Could not find scenario ${scenarioPath} in test/scenarios/`)
-        }
-
-        throw new Error(err)
-      }
+      prepareScenario(scenarioPath(this.currentTest.parent.title))
+      done()
     })
-
 
     // NOTE: don't pass arrow functions to mocha https://mochajs.org/#arrow-functions
     describe('basic deployment', function () {
@@ -137,7 +138,7 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          branch: "master"
+          branch: 'master'
         }
       ]
 
@@ -164,8 +165,8 @@ describe('BuildControl', function () {
               expect(bc.sourceBranch()).to.equal('master')
               expect(bc.tagName()).to.equal('v0.0.1')
 
-              expect(stdout).to.contain('Initialized empty Git repository')
-              expect(stdout).to.contain('Committing changes to "master".')
+              expect(stdout).to.contain('Creating git repository in')
+              expect(stdout).to.contain(`Committing changes to 'master'.`)
               expect(stdout).to.contain('Pushing master to remote-')
             })
           })
@@ -193,10 +194,10 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          branch: "master",
-          commit: {ensure: false},
+          branch: 'master',
           commit: {
-            template: "%sourceBranch%"
+            template: "%sourceBranch%",
+            ensure: false
           }
         }
       ]
@@ -239,21 +240,21 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          commit: {ensure: false},
-          branch: "master",
+          branch: 'master',
           cwd: "setup",
           commit: {
-            template: "setup commit"
+            template: "setup commit",
+            ensure: false
           }
         },
         {
           remote: {
             repo: "../../remote"
           },
-          commit: {ensure: false},
-          branch: "master",
+          branch: 'master',
           commit: {
-            template: "test commit"
+            template: "test commit",
+            ensure: false
           }
         }
       ]
@@ -279,10 +280,10 @@ describe('BuildControl', function () {
           remote: {
             repo: "../../remote"
           },
-          branch: "master",
-          commit: {ensure: false},
+          branch: 'master',
           commit: {
-            template: "simple deploy commit message"
+            template: "simple deploy commit message",
+            ensure: false
           }
         }
       ]
@@ -329,11 +330,11 @@ describe('BuildControl', function () {
             login: "privateUsername",
             token: "1234567890abcdef"
           },
-          branch: "master",
+          branch: 'master',
           commit: {
-            template: "secure endpoint commit message"
-          },
-          commit: {ensure: false}
+            template: "secure endpoint commit message",
+            ensure: false
+          }
         }
       ]
 
@@ -366,9 +367,9 @@ describe('BuildControl', function () {
           },
           cwd: "build",
           branch: "build",
-          commit: {ensure: false},
           commit: {
-            template: "a build commit for the untracked branch scenario"
+            template: "a build commit for the untracked branch scenario",
+            ensure: false
           }
         }
       ]
@@ -434,9 +435,9 @@ describe('BuildControl', function () {
             remote: {
               repo: url
             },
-            commit: {ensure: false},
             commit: {
-              auto: false
+              auto: false,
+              ensure: false
             },
             push: false
           }
@@ -495,8 +496,8 @@ describe('BuildControl', function () {
           return Promise.resolve()
             .then(() => {
               return execScenario(configurations(url), function (err, stdout, stderr, buildControls) {
-
-              })
+                expect(stderr).to.contain('Invalid command: git ls-remote --exit-code undefined')
+              }, true)
             })
             // get remote url
             .then(() => {
@@ -516,22 +517,26 @@ describe('BuildControl', function () {
 
       let configurations = [
         {
-          commit: {ensure: false},
           remote: {
             repo: '../../stage_remote',
             branch: 'master'
           },
           branch: 'stage',
-          commit: {template: 'new stage commit'}
+          commit: {
+            template: 'new stage commit',
+            ensure: false
+          }
         },
         {
-          commit: {ensure: false},
           remote: {
             repo: '../../prod_remote',
             branch: 'master'
           },
           branch: 'prod',
-          commit: {template: 'new prod commit'}
+          commit: {
+            template: 'new prod commit',
+            ensure: false
+          }
         }
       ]
 
@@ -563,7 +568,6 @@ describe('BuildControl', function () {
               .then((results) => {
                 expect(results.stdout).to.contain('first prod commit')
                 expect(results.stdout).to.contain('new prod commit')
-
               })
           })
       })
@@ -617,9 +621,11 @@ describe('BuildControl', function () {
           }
         },
         remote: {repo: '../../remote'},
-        commit: {ensure: false},
         branch: 'master',
-        commit: {template: 'git config deploy message'}
+        commit: {
+          template: 'git config deploy message',
+          ensure: false
+        }
       }]
 
       it('should set git config variables properly', () => {
@@ -659,9 +665,11 @@ describe('BuildControl', function () {
           name: 'origin',
           repo: '../../remote'
         },
-        commit: {ensure: false},
         branch: 'master',
-        commit: {template: 'new deploy to named remote commit'}
+        commit: {
+          template: 'new deploy to named remote commit',
+          ensure: false
+        }
       }]
 
       it('should have deployed to origin', () => {
@@ -690,13 +698,15 @@ describe('BuildControl', function () {
       let overrwrittenMessage = '(this commit should not appear in the final log)'
       let configurations = [{
         remote: {repo: '../../remote'},
-        commit: {ensure: false},
         force: true,
         branch: 'master',
-        commit: {template: `1st commit ${overrwrittenMessage}`}
+        commit: {
+          template: `1st commit ${overrwrittenMessage}`,
+          ensure: false
+        }
       }]
 
-      it('should force push', () => {
+      beforeEach(function (done) {
         return Promise.resolve()
           .then(() => {
             // initialize dist to be a repo and make a commit, this commit is a "bad" commit with the '6 7 8 9' numbers.txt
@@ -719,14 +729,22 @@ describe('BuildControl', function () {
           .then(() => {
             // now we'll go and diverge, remember we're 1 behind, 1 ahead
             fs.writeFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), '9 9 9 9\n')
-            gitAdd(PATH_MOCK_REPO_DIST)
-            return gitCommit("3rd commit", PATH_MOCK_REPO_DIST)
+
+            // this commit is slightly different than the others with the `.`
+            return childProcessExec(`git commit -m "3rd commit" .`, {cwd: PATH_MOCK_REPO_DIST}).then(logOutput)
           })
           .then(() => {
             // sanity check
             let numberFile = fs.readFileSync(path.join(PATH_MOCK_REPO_DIST, 'numbers.txt'), {encoding: 'utf8'})
             expect(numberFile).be.eql('9 9 9 9\n')
           })
+          .then(() => {
+            done()
+          })
+      })
+
+      it('should force push', () => {
+        return Promise.resolve()
           .then(() => {
             // We're now going to push to the remote, since we've committed before
             // there will be nothing new to commit. This is just a push to remote
@@ -775,10 +793,9 @@ describe('BuildControl', function () {
             fs.writeFileSync(path.join(PATH_MOCK_REPO, 'file.txt'), 'more content added.\n')
             return execScenario(configurations, function (err, stdout, stderr, buildControls) {
               expect(err).to.equal(null)
-              expect(stdout).to.contain('more content added.')
               // should be in both, the last part is really just testing test code, but useful because test errors on allowErrors is hairy otherwise.
-              expect(stdout).to.contain('There are uncommitted changes in your working directory.')
-              expect(stderr).to.contain('There are uncommitted changes in your working directory.')
+              expect(stdout).to.contain('There are uncommitted changes in your working directory')
+              expect(stderr).to.contain('There are uncommitted changes in your working directory')
             }, true)
           })
       })
@@ -876,13 +893,19 @@ const LogCaptureBuildControl = class extends BuildControl {
 
   constructor(config = {}) {
     super(config)
-    this.logs = []
 
     // hack to get the git messages as well
     this.originalGitLog = this.git.log
     this.git.log = ((msg, level) => {
       this.pushLog(msg, level)
       this.originalGitLog(msg, level)
+    })
+
+
+    this.originalSourceGitLog = this.sourceGit.log
+    this.sourceGit.log = ((msg, level) => {
+      this.pushLog(msg, level)
+      this.originalSourceGitLog(msg, level)
     })
   }
 
@@ -893,6 +916,10 @@ const LogCaptureBuildControl = class extends BuildControl {
 
   // mimic the log output, and don't capture debug
   pushLog(msg, level) {
+    if (this.logs === undefined) {
+      this.logs = []
+    }
+
     if (level === undefined || !level.includes('debug'))
       this.logs.push(this.maskSensitive(msg))
   }
@@ -927,8 +954,8 @@ const gitInit = (cwd = PATH_MOCK_REPO) => {
   return childProcessExec('git init', {cwd: cwd}).then(logOutput)
 }
 
-const gitAdd = (cwd = PATH_MOCK_REPO) => {
-  return childProcessExec('git add .', {cwd: cwd}).then(logOutput)
+const gitAdd = (cwd = PATH_MOCK_REPO, filename = '.') => {
+  return childProcessExec(`git add ${filename}`, {cwd: cwd}).then(logOutput)
 }
 
 const gitCommit = (msg, cwd = PATH_MOCK_REPO) => {

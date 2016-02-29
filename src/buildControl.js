@@ -2,7 +2,7 @@ import Base from './base'
 import Git from './git'
 import Paths from './paths'
 import extend from 'extend'
-import fs from 'fs'
+import fs from 'fs-extra'
 import path from 'path'
 import url from 'url'
 import semver from 'semver'
@@ -21,6 +21,10 @@ const Default = {
     login: undefined,
     token: undefined,
     branch: undefined// The remote branch to push to. Common usage would be for Heroku's master branch requirement.
+  },
+  clean: { // clean the cwd dir before/after a run
+    before: false,
+    after: false
   },
   tag: {
     name: undefined,   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
@@ -83,6 +87,37 @@ const BuildControl = class extends Base {
     this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.package = this.readPackage()
+
+    // Ensure/initialize
+    this.cleanBefore()
+    this.ensureDir()
+    if (this.config.remote.repo === '../') {
+      this.verifySourceBranchIsTracked()
+    }
+
+    // Set up repository
+    this.ensureGitInit()
+    this.configureGit()
+    this.ensureRemote()
+  }
+
+  ensureDir(){
+    // reestablish a build dir
+    fs.ensureDirSync(this.config.cwd)
+  }
+
+  cleanBefore() {
+    // clean dir
+    if (this.config.clean.before) {
+      fs.removeSync(this.config.cwd)
+    }
+  }
+
+  cleanAfter() {
+    // clean dir
+    if (this.config.clean.after) {
+      fs.removeSync(this.config.cwd)
+    }
   }
 
   resolveBranch() {
@@ -106,15 +141,6 @@ const BuildControl = class extends Base {
    *  Can run prior to tests etc to ensure versions are ready as well as commits.
    */
   prepublishCheck() {
-    if (this.config.remote.repo === '../') {
-      this.verifySourceBranchIsTracked()
-    }
-
-    // Set up repository
-    this.ensureGitInit()
-    this.configureGit()
-    this.ensureRemote()
-
     // Check if git version meets requirements
     let version = this.git.version()
     if (!version || semver.lt(version, '1.8.0')) {
@@ -165,6 +191,9 @@ const BuildControl = class extends Base {
     if (!fs.existsSync(repo)) {
       this.log(`Creating git repository in ${this.config.cwd}.`)
       this.git.init()
+    }
+    else{
+      this.debug(`Git repo already exists in ${this.config.cwd}.`)
     }
   }
 
@@ -226,7 +255,7 @@ const BuildControl = class extends Base {
    */
   fetch(dest) {
     let branch = this.resolveBranch() + (dest ? ':' + this.config.branch : '');
-    this.log(`Fetching "${this.config.branch}" ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote.repo}.`);
+    this.log(`Fetching '${this.config.branch}' ${(this.config.fetch.shallow ? 'files' : 'history')} from ${this.config.remote.repo}.`);
     this.git.fetch(this.config.remote.name, branch, this.config.fetch.shallow)
   }
 
@@ -340,7 +369,7 @@ const BuildControl = class extends Base {
       return
     }
 
-    this.log(`Committing changes to "${this.config.branch}".`)
+    this.log(`Committing changes to '${this.config.branch}'.`)
     this.git.add()
     this.git.commit(message)
   }
@@ -480,7 +509,7 @@ const BuildControl = class extends Base {
     }
     else if (!remoteBranchExists && !localBranchExists) {
       // Create local branch
-      this.log(`Creating branch "${this.config.branch}".`)
+      this.log(`Creating branch '${this.config.branch}'.`)
       this.git.checkout(this.config.branch)
     }
 
@@ -491,6 +520,7 @@ const BuildControl = class extends Base {
     this.commit()
     this.tag()
     this.push()
+    this.cleanAfter()
   }
 }
 
