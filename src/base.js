@@ -55,6 +55,10 @@ const Base = class {
       this.notifyError('cwd is required')
     }
 
+    if(command.includes(`undefined`)){
+      this.notifyError(`Invalid command: ${command}`)
+    }
+
     this.debug(`Executing \`${command}\` with cwd: ${options['cwd']}`)
     let shellResult = shelljs.exec(command, options)
     let output = this.logShellOutput(shellResult, logResult);
