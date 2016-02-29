@@ -469,6 +469,12 @@ const BuildControl = class extends Base {
     if (this.tagName()) {
       this.git.pushTag(this.config.remote.name, this.tagName())
     }
+
+    // if this was pushed to a relative path, go ahead and try and push that up to the origin
+    if(this.config.remote.repo.includes('..')){
+      this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
+      this.sourceGit.push('origin', branch)
+    }
   }
 
   localBranchExists() {
