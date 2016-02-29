@@ -84,66 +84,11 @@ const BuildControl = class extends Base {
     this.package = this.readPackage()
   }
 
-  /**
-   * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
-   */
-  tagName() {
-    if (this._tagName !== undefined) {
-      return this._tagName
-    }
-
-    if (this.config.tag.name === false) {
-      this._tagName = false
-    }
-    else if (this.config.tag.name === undefined) {
-      this._tagName = false
-    }
-    else {
-      let name = null
-      if (typeof this.config.tag.name === 'function') {
-        name = this.config.tag.name()
-      }
-      else {
-        name = this.config.tag.name
-      }
-
-      // If the tag exists, skip tagging
-      if (this.tagExists(name)) {
-        this.log(`The tag "${name}" already exists on ${this.config.remote.name}.`)
-        name = false
-      }
-
-      this._tagName = name
-    }
-
-    return this._tagName
-  }
-
-  tagExists(name) {
-    if (this.git.tagExists(name, this.config.remote.name)) {
-      return true
-    }
-    else {
-      return false
-    }
-  }
-
   resolveBranch() {
     return (this.config.remote.branch || this.config.branch)
   }
 
-  /**
-   * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
-   * @returns {*}
-   */
-  autoResolveTagName() {
-    if (this.package && this.package.version) {
-      return `v${this.package.version}`
-    }
-    else {
-      return false
-    }
-  }
+
 
   readPackage() {
     let file = path.join(this.config.sourceCwd, 'package.json')
@@ -392,16 +337,66 @@ const BuildControl = class extends Base {
       return
     }
 
-    // #tagName does this check, but user can pass in their own tag resolution function so we need to ensure we do it here.
-    if (this.tagExists(tagName)) {
-      this.log(`The tag "${tagName}" already exists on ${this.config.remote.name}. Skipping tagging.`)
-      return
-    }
-
     this.log(`Tagging the local repository with ${tagName}`)
     this.git.tag(tagName)
   }
 
+  /**
+   * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
+   */
+  tagName() {
+    if (this._tagName !== undefined) {
+      return this._tagName
+    }
+
+    if (this.config.tag.name === false) {
+      this._tagName = false
+    }
+    else if (this.config.tag.name === undefined) {
+      this._tagName = false
+    }
+    else {
+      let name = null
+      if (typeof this.config.tag.name === 'function') {
+        name = this.config.tag.name()
+      }
+      else {
+        name = this.config.tag.name
+      }
+
+      // If the tag exists, skip tagging
+      if (name && this.tagExists(name)) {
+        this.log(`WARNING: The tag "${name}" already exists on ${this.config.remote.name}, skipping tagging.`)
+        name = false
+      }
+
+      this._tagName = name
+    }
+
+    return this._tagName
+  }
+
+  /**
+   * Resolver plugged into options as tag: {name: ()} that can be overridden by a string or other fn
+   * @returns {*}
+   */
+  autoResolveTagName() {
+    if (this.package && this.package.version) {
+      return `v${this.package.version}`
+    }
+    else {
+      return false
+    }
+  }
+
+  tagExists(name) {
+    if (this.git.tagExists(name, this.config.remote.name)) {
+      return true
+    }
+    else {
+      return false
+    }
+  }
 
   /**
    * Push branch to remote
