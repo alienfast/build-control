@@ -16,8 +16,16 @@ let recipes = [
   rollup
 ]
 
-let prepublish = new Prepublish(gulp, preset, {debug: true})
-let publishBuild = new PublishBuild(gulp, preset, {debug: true})
+let buildControlConfig = {
+  debug: true,
+  options: {
+    tag: {
+      existsFailure: false
+    }
+  }
+}
+let prepublish = new Prepublish(gulp, preset, buildControlConfig)
+let publishBuild = new PublishBuild(gulp, preset, buildControlConfig)
 
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new TaskSeries(gulp, 'default', recipes, {debug: false})
