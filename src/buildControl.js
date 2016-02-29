@@ -486,7 +486,7 @@ const BuildControl = class extends Base {
       this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.git.pushTag(remote, this.tagName())
+        this.sourceGit.pushTag(remote, this.tagName())
       }
     }
   }
