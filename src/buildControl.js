@@ -483,10 +483,10 @@ const BuildControl = class extends Base {
       let remote = 'origin'
 
       this.log(`Repo is using relative path, pushing ${branch} from the source directory...`)
-      this.sourceGit.push(origin, branch)
+      this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.git.pushTag(origin, this.tagName())
+        this.git.pushTag(remote, this.tagName())
       }
     }
   }
