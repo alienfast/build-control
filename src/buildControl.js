@@ -89,7 +89,6 @@ const BuildControl = class extends Base {
   }
 
 
-
   readPackage() {
     let file = path.join(this.config.sourceCwd, 'package.json')
     if (shelljs.test('-f', file, {silent: true})) {
@@ -103,30 +102,22 @@ const BuildControl = class extends Base {
   }
 
   /**
-   *
+   *  Can run prior to tests etc to ensure versions are ready as well as commits.
+   * @param tagExistsError - if tag exists, throw an error, defaults to false.
    */
-  checkRequirements() {
+  prepublishCheck(tagExistsError = false) {
+
     // Check if git version meets requirements
     let version = this.git.version()
     if (!version || semver.lt(version, '1.8.0')) {
       throw(`Current Git version is ${version}. This plugin requires Git >= 1.8.0.`)
     }
 
-    // Check that build directory exists
-    if (!fs.existsSync(this.config.cwd)) {
-      throw(`Build directory ${this.config.cwd} doesn't exist. Nothing to version.`)
-    }
-
-    // Check that build directory contains files
-    if (fs.readdirSync(this.config.cwd).length === 0) {
-      throw(`Build directory ${this.config.cwd} is empty. Nothing to version.`)
-    }
-
     // If connectCommits is true check that the main project's working directory is clean
     if (this.config.connectCommits) {
       let diff = this.git.diff()
       if (diff !== '') {
-        this.notifyError('There are uncommitted changes in your working directory. Please commit changes to the main project before you commit to the built code.')
+        this.notifyError('There are uncommitted changes in your working directory. Please commit changes to the project before you run BuildControl.')
       }
       else {
         this.debug(`No diffs found.`)
@@ -135,6 +126,24 @@ const BuildControl = class extends Base {
 
     if (this.config.fetch.shallow && semver.lt(version, '1.9.0')) {
       this.notifyError(`Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ${version}.`)
+    }
+
+    // trigger message if tag exists in remote.
+    this.tagName(tagExistsError)
+  }
+
+
+  prepublishBuildCheck() {
+    this.prepublishCheck()
+
+    // Check that build directory contains files
+    if (fs.readdirSync(this.config.cwd).length === 0) {
+      throw(`Build directory ${this.config.cwd} is empty. Nothing to version.`)
+    }
+
+    // Check that build directory exists
+    if (!fs.existsSync(this.config.cwd)) {
+      throw(`Build directory ${this.config.cwd} doesn't exist. Nothing to version.`)
     }
   }
 
@@ -260,6 +269,9 @@ const BuildControl = class extends Base {
 
   sourceCommitLink() {
     return `[\`%sourceCommit%\`](../../commit/%sourceCommitFull%)`
+      .replace(/%sourceCommit%/g, this.sourceCommit())
+      .replace(/%sourceCommitFull%/g, this.sourceCommitFull())
+
   }
 
   sourceBranch() {
@@ -273,6 +285,7 @@ const BuildControl = class extends Base {
     if (this._sourceTag) {
       return this._sourceTag
     }
+    ''
 
     let name = this.tagName()
     if (name) {
@@ -288,6 +301,7 @@ const BuildControl = class extends Base {
   sourceTagLink() {
     if (this.tagName()) {
       return `[\`%sourceTag%\`](../../releases/tag/%sourceTag%)`
+        .replace(/%sourceTag%/g, this.sourceTag())
     }
     else {
       return ''
@@ -343,8 +357,9 @@ const BuildControl = class extends Base {
 
   /**
    * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
+   * @param tagExistsError - if tag exists, throw an error, defaults to false.
    */
-  tagName() {
+  tagName(tagExistsError = false) {
     if (this._tagName !== undefined) {
       return this._tagName
     }
@@ -366,7 +381,14 @@ const BuildControl = class extends Base {
 
       // If the tag exists, skip tagging
       if (name && this.tagExists(name)) {
-        this.log(`WARNING: The tag "${name}" already exists on ${this.config.remote.name}, skipping tagging.`)
+        let msg = `The tag "${name}" already exists on ${this.config.remote.name}, skipping tagging.`
+        if (tagExistsError) {
+          this.notifyError(msg)
+        }
+        else {
+          this.log(`WARNING: ${msg}`)
+        }
+
         name = false
       }
 
@@ -431,7 +453,8 @@ const BuildControl = class extends Base {
     this.log(this.interpolate(`Starting %sourceName% for commit %sourceCommit% on branch %sourceBranch% using directory ${this.config.cwd}...`))
 
     // Prepare
-    this.checkRequirements()
+    this.prepublishBuildCheck()
+
     if (this.config.remote.repo === '../') this.verifySourceBranchIsTracked()
 
     // Set up repository

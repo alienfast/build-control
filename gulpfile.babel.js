@@ -1,5 +1,5 @@
 import gulp from 'gulp'
-import {PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, TaskSeries} from 'gulp-pipeline/src/index'
+import {Prepublish, PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, TaskSeries} from 'gulp-pipeline/src/index'
 
 let preset = Preset.nodeSrc()
 
@@ -16,12 +16,13 @@ let recipes = [
   rollup
 ]
 
+let prepublish = new Prepublish(gulp, preset, {debug: true})
 let publishBuild = new PublishBuild(gulp, preset, {debug: true})
 
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new TaskSeries(gulp, 'default', recipes, {debug: false})
 new TaskSeries(gulp, 'rollup', rollup)
-new TaskSeries(gulp, 'publish', recipes.concat(publishBuild), {debug: false})
+new TaskSeries(gulp, 'publish', [prepublish].concat(recipes).concat(publishBuild), {debug: false})
 
 
 
