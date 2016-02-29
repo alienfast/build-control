@@ -85,20 +85,46 @@ const BuildControl = class extends Base {
   }
 
   /**
-   * convenience to resolve from a fn or string
+   * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
    */
   tagName() {
-    if (this.config.tag.name === false) {
-      return false
+    if (this._tagName !== undefined) {
+      return this._tagName
     }
-    else if (typeof this.config.tag.name === 'function') {
-      return this.config.tag.name()
+
+    if (this.config.tag.name === false) {
+      this._tagName = false
     }
     else if (this.config.tag.name === undefined) {
-      return false
+      this._tagName = false
     }
     else {
-      return this.config.tag.name
+      let name = null
+      if (typeof this.config.tag.name === 'function') {
+        name = this.config.tag.name()
+      }
+      else {
+        name = this.config.tag.name
+      }
+
+      // If the tag exists, skip tagging
+      if (this.tagExists(name)) {
+        this.log(`The tag "${name}" already exists on ${this.config.remote.name}.`)
+        name = false
+      }
+
+      this._tagName = name
+    }
+
+    return this._tagName
+  }
+
+  tagExists(name) {
+    if (this.git.tagExists(name, this.config.remote.name)) {
+      return true
+    }
+    else {
+      return false
     }
   }
 
@@ -287,6 +313,10 @@ const BuildControl = class extends Base {
     return this._sourceCommitFull = this.sourceGit.sourceCommitFull()
   }
 
+  sourceCommitLink() {
+    return `[\`%sourceCommit%\`](../../commit/%sourceCommitFull%)`
+  }
+
   sourceBranch() {
     if (this._sourceBranch) {
       return this._sourceBranch
@@ -294,12 +324,40 @@ const BuildControl = class extends Base {
     return this._sourceBranch = this.sourceGit.sourceBranch()
   }
 
-  interpolate(template){
+  sourceTag() {
+    if (this._sourceTag) {
+      return this._sourceTag
+    }
+
+    let name = this.tagName()
+    if (name) {
+      this._sourceTag = name
+    }
+    else {
+      this._sourceTag = ''
+    }
+
+    return this._sourceTag
+  }
+
+  sourceTagLink() {
+    if (this.tagName()) {
+      return `[\`%sourceTag%\`](../../releases/tag/%sourceTag%)`
+    }
+    else {
+      return ''
+    }
+  }
+
+
+  interpolate(template) {
     return template
       .replace(/%sourceName%/g, this.sourceName())
-      .replace(/%sourceTag%/g, this.config.tag.name())
+      .replace(/%sourceTag%/g, this.sourceTag())
+      .replace(/%sourceTagLink%/g, this.sourceTagLink())
       .replace(/%sourceCommit%/g, this.sourceCommit())
       .replace(/%sourceCommitFull%/g, this.sourceCommitFull())
+      .replace(/%sourceCommitLink%/g, this.sourceCommitLink())
       .replace(/%sourceBranch%/g, this.sourceBranch())
   }
 
@@ -307,6 +365,11 @@ const BuildControl = class extends Base {
    * Stage and commit to a branch
    */
   commit() {
+
+    if (!this.config.commit.auto) {
+      return
+    }
+
     let message = this.interpolate(this.config.commit.template)
 
     // If there are no changes, skip commit
@@ -323,15 +386,20 @@ const BuildControl = class extends Base {
   /**
    * Tag local branch
    */
-  tagLocalBranch() {
-    // If the tag exists, skip tagging
-    if (this.git.tagExists(this.tagName(), this.config.remote.name)) {
-      this.log(`The tag "${this.tagName()}" already exists on ${this.config.remote.name}. Skipping tagging.`)
+  tag() {
+    let tagName = this.tagName()
+    if (!tagName) {
       return
     }
 
-    this.log(`Tagging the local repository with ${this.tagName()}`)
-    this.git.tag(this.config.tag.name())
+    // #tagName does this check, but user can pass in their own tag resolution function so we need to ensure we do it here.
+    if (this.tagExists(tagName)) {
+      this.log(`The tag "${tagName}" already exists on ${this.config.remote.name}. Skipping tagging.`)
+      return
+    }
+
+    this.log(`Tagging the local repository with ${tagName}`)
+    this.git.tag(tagName)
   }
 
 
@@ -339,6 +407,10 @@ const BuildControl = class extends Base {
    * Push branch to remote
    */
   push() {
+    if (!this.config.push) {
+      return
+    }
+
     let branch = this.config.branch
 
     if (this.config.remote.branch) {
@@ -403,17 +475,9 @@ const BuildControl = class extends Base {
     this.git.symbolicRefHead(this.config.branch)
     this.git.reset()
 
-    if (this.config.commit.auto) {
-      this.commit()
-    }
-
-    if (this.config.tag.name()) {
-      this.tagLocalBranch()
-    }
-
-    if (this.config.push) {
-      this.push()
-    }
+    this.commit()
+    this.tag()
+    this.push()
   }
 }
 
