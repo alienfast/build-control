@@ -1,4 +1,4 @@
-import Base from './base'
+import BaseSourced from './baseSourced'
 import Git from './git'
 import Paths from './paths'
 import extend from 'extend'
@@ -9,8 +9,6 @@ import semver from 'semver'
 import shelljs from 'shelljs'
 
 const Default = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
-  cwd: 'dist',        // The directory that contains your built code.
   branch: 'dist',     // The branch to commit to.
   remote: {
     repo: '../',      // The remote repo to push to (URL|RemoteName|FileSystemPath). Common examples include:
@@ -53,7 +51,7 @@ const Default = {
   force: false     // Pushes branch to remote with the flag --force. This will NOT checkout the remote branch, and will OVERRIDE remote with the repo commits.  Use with caution.
 }
 
-const BuildControl = class extends Base {
+const BuildControl = class extends BaseSourced {
 
   constructor(config = {}) {
     super(extend(true, {},
@@ -79,11 +77,6 @@ const BuildControl = class extends Base {
       this.config.sensitive[`${this.config.remote.login}:${this.config.remote.token}`] = '<credentials>'
       this.config.sensitive[this.config.remote.token] = '<token>'
     }
-
-    // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
-    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
-    // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
-    this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
 
     this.sourceGit = new Git({cwd: this.config.sourceCwd, debug: this.config.debug, sensitive: this.config.sensitive})
     this.git = new Git({cwd: this.config.cwd, debug: this.config.debug, sensitive: this.config.sensitive})
@@ -486,7 +479,7 @@ const BuildControl = class extends Base {
       this.sourceGit.push(remote, branch)
 
       if (this.tagName()) {
-        this.sourceGit.pushTag(remote, this.tagName())
+        this.source.pushTag(remote, this.tagName())
       }
     }
   }

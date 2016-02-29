@@ -1,3 +1,4 @@
+import Paths from './paths'
 import extend from 'extend'
 import stringify from 'stringify-object'
 import shelljs from 'shelljs'
@@ -6,7 +7,8 @@ import fancyLog from 'fancy-log'
 
 export const Default = {
   debug: false,
-  sensitive: {}
+  sensitive: {},
+  cwd: 'dist'        // The directory that contains your built code.
 }
 
 const Base = class {
@@ -18,8 +20,7 @@ const Base = class {
   constructor(config) {
     this.config = extend(true, {}, Default, config)
 
-    // TODO: tests override #log and we need to complete construction before logging....not sure how to make that happen, setTimeout is hokey and doesn't work right
-    //this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
+    this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
 
   // ----------------------------------------------
