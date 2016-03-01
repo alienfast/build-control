@@ -18,11 +18,7 @@ let recipes = [
 
 let buildControlConfig = {
   debug: false,
-  options: {
-    tag: {
-      existsFailure: false
-    }
-  }
+  options: {}
 }
 let prepublish = new Prepublish(gulp, preset, buildControlConfig)
 let publishBuild = new PublishBuild(gulp, preset, buildControlConfig)
@@ -30,7 +26,7 @@ let publishBuild = new PublishBuild(gulp, preset, buildControlConfig)
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new TaskSeries(gulp, 'default', recipes, {debug: false})
 new TaskSeries(gulp, 'rollup', rollup)
-new TaskSeries(gulp, 'publish', [prepublish].concat(recipes).concat(publishBuild), {debug: false})
+new TaskSeries(gulp, 'publish', [prepublish].concat(recipes).concat(publishBuild))
 
 
 

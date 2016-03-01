@@ -26,7 +26,7 @@ const Default = {
   },
   tag: {
     name: undefined,   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
-    existsFailure: false // if tag already exists, fail the executions
+    existsFailure: true // if tag already exists, fail the execution
   },
   push: true,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
   disableRelativeAutoPush: false, // when testing, we may have nothing to push to.  By default, if using a remote repo that is relative, will try to push using the config.branch using the sourceGit all the way to the server.
