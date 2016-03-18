@@ -4487,12 +4487,14 @@ var Git = function (_Base) {
   }, {
     key: 'diff',
     value: function diff() {
-      return this.exec('git diff', true);
+      var logResult = arguments.length <= 0 || arguments[0] === undefined ? true : arguments[0];
+
+      return this.exec('git diff', logResult);
     }
   }, {
     key: 'ensureCommitted',
     value: function ensureCommitted() {
-      var diff = this.diff();
+      var diff = this.diff(false);
       if (diff !== '') {
         this.notifyError('There are uncommitted changes in your working directory ' + this.config.cwd + '. Please commit the changes first.');
       } else {

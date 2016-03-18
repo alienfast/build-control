@@ -193,12 +193,12 @@ const Git = class extends Base {
     return (this.exec('git --version', false).match(/\d+\.\d+\.\d+/) || []).shift()
   }
 
-  diff() {
-    return this.exec('git diff', true)
+  diff(logResult = true) {
+    return this.exec('git diff', logResult)
   }
 
   ensureCommitted(){
-    let diff = this.diff()
+    let diff = this.diff(false)
     if (diff !== '') {
       this.notifyError(`There are uncommitted changes in your working directory ${this.config.cwd}. Please commit the changes first.`)
     }
