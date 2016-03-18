@@ -1,34 +1,39 @@
 import gulp from 'gulp'
 import {Prepublish, PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, Aggregate, series, parallel} from 'gulp-pipeline/src/index'
 
-let preset = Preset.nodeSrc()
+const preset = Preset.nodeSrc()
+
+// Tell rollup _not_ to bundle our dependencies
+const jsOverrides = {debug: false, nodeResolve: {enabled: false}, commonjs: {enabled: false}}
 
 // instantiate ordered array of recipes (for each instantiation the tasks will be created e.g. rollup:es and rollup:es:watch)
-let rollup = series(gulp,
-  new Clean(gulp, preset),
-  parallel(gulp,
-    new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}),
-    new RollupCjs(gulp, preset, {options: {dest: 'build-control.cjs.js'}})
+const rollup = new Aggregate(gulp, 'rollup',
+  series(gulp,
+    new Clean(gulp, preset),
+    parallel(gulp,
+      new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}, jsOverrides),
+      new RollupCjs(gulp, preset, {options: {dest: 'build-control.cjs.js'}}, jsOverrides)
+    )
   )
 )
 
-let recipes = series(gulp,
-  new EsLint(gulp, preset),
-  new Mocha(gulp, preset, {debug: false}),
-  rollup
+// Create the `default` and `default:watch` tasks as a sequence of the recipes already defined
+const recipes = new Aggregate(gulp, 'default',
+  series(gulp,
+    new EsLint(gulp, preset),
+    new Mocha(gulp, preset, {debug: false}),
+    rollup
+  )
 )
 
-let buildControlConfig = {
-  debug: false,
-  options: {}
-}
-let prepublish = new Prepublish(gulp, preset, buildControlConfig)
-let publishBuild = new PublishBuild(gulp, preset, buildControlConfig)
+//---------------
+// Publish tasks
 
-// Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
-new Aggregate(gulp, 'default', recipes, {debug: false})
-new Aggregate(gulp, 'rollup', rollup)
-new Aggregate(gulp, 'publish', series(gulp, prepublish, recipes, publishBuild))
-
-
-
+// `publish`, gives us a `publish:watch` as well if we so desire to use it
+new Aggregate(gulp, 'publish',
+  series(gulp,
+    new Prepublish(gulp, preset),
+    recipes,
+    new PublishBuild(gulp, preset)
+  )
+)
