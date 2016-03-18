@@ -3,16 +3,13 @@ import {Prepublish, PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, Rollup
 
 const preset = Preset.nodeSrc()
 
-// Tell rollup _not_ to bundle our dependencies
-const jsOverrides = {debug: false, nodeResolve: {enabled: false}, commonjs: {enabled: false}}
-
 // instantiate ordered array of recipes (for each instantiation the tasks will be created e.g. rollup:es and rollup:es:watch)
 const rollup = new Aggregate(gulp, 'rollup',
   series(gulp,
     new Clean(gulp, preset),
     parallel(gulp,
-      new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}, jsOverrides),
-      new RollupCjs(gulp, preset, {options: {dest: 'build-control.cjs.js'}}, jsOverrides)
+      new RollupEs(gulp, preset, {options: {dest: 'build-control.es.js'}}),
+      new RollupCjs(gulp, preset, {options: {dest: 'build-control.cjs.js'}})
     )
   )
 )
