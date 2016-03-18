@@ -28,7 +28,7 @@ let publishBuild = new PublishBuild(gulp, preset, buildControlConfig)
 // Simple helper to create the `default` and `default:watch` tasks as a sequence of the recipes already defined
 new Aggregate(gulp, 'default', recipes, {debug: false})
 new Aggregate(gulp, 'rollup', rollup)
-new Aggregate(gulp, 'publish', series(gulp, prepublish, recipes,publishBuild))
+new Aggregate(gulp, 'publish', series(gulp, prepublish, recipes, publishBuild))
 
 
 
