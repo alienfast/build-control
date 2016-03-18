@@ -159,7 +159,7 @@ const BuildControl = class extends BaseSourced {
     this.prepublishCheck()
 
     // trigger message if tag exists in remote.
-    this.tagNameExists()
+    this.tagName()
 
     // Check that build directory contains files
     if (fs.readdirSync(this.config.cwd).length === 0) {
@@ -315,7 +315,7 @@ const BuildControl = class extends BaseSourced {
     }
     ''
 
-    let name = this.tagNameExists()
+    let name = this.tagName()
     if (name) {
       this._sourceTag = name
     }
@@ -374,7 +374,7 @@ const BuildControl = class extends BaseSourced {
    * Tag local branch
    */
   tag() {
-    let tagName = this.tagNameExists()
+    let tagName = this.tagName()
     if (!tagName) {
       return
     }
@@ -386,7 +386,7 @@ const BuildControl = class extends BaseSourced {
   /**
    * Convenience to resolve from a fn or string.  If tag already exists in a remote, it will return false (don't forget to bump your version in the package.json!)
    */
-  tagNameExists() {
+  tagName() {
     if (this._tagName !== undefined) {
       return this._tagName
     }
