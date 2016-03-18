@@ -64,6 +64,7 @@ const BuildControl = class extends BaseSourced {
 
     // Build remote repo if sensitive information is passed in
     if (this.config.remote.login && this.config.remote.token) {
+      this.log(`Configuring remote with login and token...`)
       let remote = url.parse(this.config.remote.repo)
 
       this.config.remote.repo = url.format({
