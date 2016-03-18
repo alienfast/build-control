@@ -12,9 +12,9 @@ var require$$2$1 = _interopDefault(require('stream'));
 var require$$5 = _interopDefault(require('assert'));
 var require$$0$2 = _interopDefault(require('constants'));
 var require$$8 = _interopDefault(require('events'));
+var url = _interopDefault(require('url'));
 
-var __commonjs_global = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : this;
-function __commonjs(fn, module) { return module = { exports: {} }, fn(module, module.exports, __commonjs_global), module.exports; }
+function __commonjs(fn, module) { return module = { exports: {} }, fn(module, module.exports), module.exports; }
 
 
 var babelHelpers = {};
@@ -2934,14 +2934,962 @@ var index$8 = __commonjs(function (module) {
 
 var require$$2$3 = index$8 && (typeof index$8 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$8)) === 'object' && 'default' in index$8 ? index$8['default'] : index$8;
 
+var cssKeywords = __commonjs(function (module) {
+	module.exports = {
+		aliceblue: [240, 248, 255],
+		antiquewhite: [250, 235, 215],
+		aqua: [0, 255, 255],
+		aquamarine: [127, 255, 212],
+		azure: [240, 255, 255],
+		beige: [245, 245, 220],
+		bisque: [255, 228, 196],
+		black: [0, 0, 0],
+		blanchedalmond: [255, 235, 205],
+		blue: [0, 0, 255],
+		blueviolet: [138, 43, 226],
+		brown: [165, 42, 42],
+		burlywood: [222, 184, 135],
+		cadetblue: [95, 158, 160],
+		chartreuse: [127, 255, 0],
+		chocolate: [210, 105, 30],
+		coral: [255, 127, 80],
+		cornflowerblue: [100, 149, 237],
+		cornsilk: [255, 248, 220],
+		crimson: [220, 20, 60],
+		cyan: [0, 255, 255],
+		darkblue: [0, 0, 139],
+		darkcyan: [0, 139, 139],
+		darkgoldenrod: [184, 134, 11],
+		darkgray: [169, 169, 169],
+		darkgreen: [0, 100, 0],
+		darkgrey: [169, 169, 169],
+		darkkhaki: [189, 183, 107],
+		darkmagenta: [139, 0, 139],
+		darkolivegreen: [85, 107, 47],
+		darkorange: [255, 140, 0],
+		darkorchid: [153, 50, 204],
+		darkred: [139, 0, 0],
+		darksalmon: [233, 150, 122],
+		darkseagreen: [143, 188, 143],
+		darkslateblue: [72, 61, 139],
+		darkslategray: [47, 79, 79],
+		darkslategrey: [47, 79, 79],
+		darkturquoise: [0, 206, 209],
+		darkviolet: [148, 0, 211],
+		deeppink: [255, 20, 147],
+		deepskyblue: [0, 191, 255],
+		dimgray: [105, 105, 105],
+		dimgrey: [105, 105, 105],
+		dodgerblue: [30, 144, 255],
+		firebrick: [178, 34, 34],
+		floralwhite: [255, 250, 240],
+		forestgreen: [34, 139, 34],
+		fuchsia: [255, 0, 255],
+		gainsboro: [220, 220, 220],
+		ghostwhite: [248, 248, 255],
+		gold: [255, 215, 0],
+		goldenrod: [218, 165, 32],
+		gray: [128, 128, 128],
+		green: [0, 128, 0],
+		greenyellow: [173, 255, 47],
+		grey: [128, 128, 128],
+		honeydew: [240, 255, 240],
+		hotpink: [255, 105, 180],
+		indianred: [205, 92, 92],
+		indigo: [75, 0, 130],
+		ivory: [255, 255, 240],
+		khaki: [240, 230, 140],
+		lavender: [230, 230, 250],
+		lavenderblush: [255, 240, 245],
+		lawngreen: [124, 252, 0],
+		lemonchiffon: [255, 250, 205],
+		lightblue: [173, 216, 230],
+		lightcoral: [240, 128, 128],
+		lightcyan: [224, 255, 255],
+		lightgoldenrodyellow: [250, 250, 210],
+		lightgray: [211, 211, 211],
+		lightgreen: [144, 238, 144],
+		lightgrey: [211, 211, 211],
+		lightpink: [255, 182, 193],
+		lightsalmon: [255, 160, 122],
+		lightseagreen: [32, 178, 170],
+		lightskyblue: [135, 206, 250],
+		lightslategray: [119, 136, 153],
+		lightslategrey: [119, 136, 153],
+		lightsteelblue: [176, 196, 222],
+		lightyellow: [255, 255, 224],
+		lime: [0, 255, 0],
+		limegreen: [50, 205, 50],
+		linen: [250, 240, 230],
+		magenta: [255, 0, 255],
+		maroon: [128, 0, 0],
+		mediumaquamarine: [102, 205, 170],
+		mediumblue: [0, 0, 205],
+		mediumorchid: [186, 85, 211],
+		mediumpurple: [147, 112, 219],
+		mediumseagreen: [60, 179, 113],
+		mediumslateblue: [123, 104, 238],
+		mediumspringgreen: [0, 250, 154],
+		mediumturquoise: [72, 209, 204],
+		mediumvioletred: [199, 21, 133],
+		midnightblue: [25, 25, 112],
+		mintcream: [245, 255, 250],
+		mistyrose: [255, 228, 225],
+		moccasin: [255, 228, 181],
+		navajowhite: [255, 222, 173],
+		navy: [0, 0, 128],
+		oldlace: [253, 245, 230],
+		olive: [128, 128, 0],
+		olivedrab: [107, 142, 35],
+		orange: [255, 165, 0],
+		orangered: [255, 69, 0],
+		orchid: [218, 112, 214],
+		palegoldenrod: [238, 232, 170],
+		palegreen: [152, 251, 152],
+		paleturquoise: [175, 238, 238],
+		palevioletred: [219, 112, 147],
+		papayawhip: [255, 239, 213],
+		peachpuff: [255, 218, 185],
+		peru: [205, 133, 63],
+		pink: [255, 192, 203],
+		plum: [221, 160, 221],
+		powderblue: [176, 224, 230],
+		purple: [128, 0, 128],
+		rebeccapurple: [102, 51, 153],
+		red: [255, 0, 0],
+		rosybrown: [188, 143, 143],
+		royalblue: [65, 105, 225],
+		saddlebrown: [139, 69, 19],
+		salmon: [250, 128, 114],
+		sandybrown: [244, 164, 96],
+		seagreen: [46, 139, 87],
+		seashell: [255, 245, 238],
+		sienna: [160, 82, 45],
+		silver: [192, 192, 192],
+		skyblue: [135, 206, 235],
+		slateblue: [106, 90, 205],
+		slategray: [112, 128, 144],
+		slategrey: [112, 128, 144],
+		snow: [255, 250, 250],
+		springgreen: [0, 255, 127],
+		steelblue: [70, 130, 180],
+		tan: [210, 180, 140],
+		teal: [0, 128, 128],
+		thistle: [216, 191, 216],
+		tomato: [255, 99, 71],
+		turquoise: [64, 224, 208],
+		violet: [238, 130, 238],
+		wheat: [245, 222, 179],
+		white: [255, 255, 255],
+		whitesmoke: [245, 245, 245],
+		yellow: [255, 255, 0],
+		yellowgreen: [154, 205, 50]
+	};
+});
+
+var require$$0$11 = cssKeywords && (typeof cssKeywords === 'undefined' ? 'undefined' : babelHelpers.typeof(cssKeywords)) === 'object' && 'default' in cssKeywords ? cssKeywords['default'] : cssKeywords;
+
+var conversions = __commonjs(function (module) {
+	/* MIT license */
+	var cssKeywords = require$$0$11;
+
+	// NOTE: conversions should only return primitive values (i.e. arrays, or
+	//       values that give correct `typeof` results).
+	//       do not use box values types (i.e. Number(), String(), etc.)
+
+	var reverseKeywords = {};
+	for (var key in cssKeywords) {
+		if (cssKeywords.hasOwnProperty(key)) {
+			reverseKeywords[cssKeywords[key].join()] = key;
+		}
+	}
+
+	var convert = module.exports = {
+		rgb: {},
+		hsl: {},
+		hsv: {},
+		hwb: {},
+		cmyk: {},
+		xyz: {},
+		lab: {},
+		lch: {},
+		hex: {},
+		keyword: {},
+		ansi16: {},
+		ansi256: {}
+	};
+
+	convert.rgb.hsl = function (rgb) {
+		var r = rgb[0] / 255;
+		var g = rgb[1] / 255;
+		var b = rgb[2] / 255;
+		var min = Math.min(r, g, b);
+		var max = Math.max(r, g, b);
+		var delta = max - min;
+		var h;
+		var s;
+		var l;
+
+		if (max === min) {
+			h = 0;
+		} else if (r === max) {
+			h = (g - b) / delta;
+		} else if (g === max) {
+			h = 2 + (b - r) / delta;
+		} else if (b === max) {
+			h = 4 + (r - g) / delta;
+		}
+
+		h = Math.min(h * 60, 360);
+
+		if (h < 0) {
+			h += 360;
+		}
+
+		l = (min + max) / 2;
+
+		if (max === min) {
+			s = 0;
+		} else if (l <= 0.5) {
+			s = delta / (max + min);
+		} else {
+			s = delta / (2 - max - min);
+		}
+
+		return [h, s * 100, l * 100];
+	};
+
+	convert.rgb.hsv = function (rgb) {
+		var r = rgb[0];
+		var g = rgb[1];
+		var b = rgb[2];
+		var min = Math.min(r, g, b);
+		var max = Math.max(r, g, b);
+		var delta = max - min;
+		var h;
+		var s;
+		var v;
+
+		if (max === 0) {
+			s = 0;
+		} else {
+			s = delta / max * 1000 / 10;
+		}
+
+		if (max === min) {
+			h = 0;
+		} else if (r === max) {
+			h = (g - b) / delta;
+		} else if (g === max) {
+			h = 2 + (b - r) / delta;
+		} else if (b === max) {
+			h = 4 + (r - g) / delta;
+		}
+
+		h = Math.min(h * 60, 360);
+
+		if (h < 0) {
+			h += 360;
+		}
+
+		v = max / 255 * 1000 / 10;
+
+		return [h, s, v];
+	};
+
+	convert.rgb.hwb = function (rgb) {
+		var r = rgb[0];
+		var g = rgb[1];
+		var b = rgb[2];
+		var h = convert.rgb.hsl(rgb)[0];
+		var w = 1 / 255 * Math.min(r, Math.min(g, b));
+
+		b = 1 - 1 / 255 * Math.max(r, Math.max(g, b));
+
+		return [h, w * 100, b * 100];
+	};
+
+	convert.rgb.cmyk = function (rgb) {
+		var r = rgb[0] / 255;
+		var g = rgb[1] / 255;
+		var b = rgb[2] / 255;
+		var c;
+		var m;
+		var y;
+		var k;
+
+		k = Math.min(1 - r, 1 - g, 1 - b);
+		c = (1 - r - k) / (1 - k) || 0;
+		m = (1 - g - k) / (1 - k) || 0;
+		y = (1 - b - k) / (1 - k) || 0;
+
+		return [c * 100, m * 100, y * 100, k * 100];
+	};
+
+	convert.rgb.keyword = function (rgb) {
+		return reverseKeywords[rgb.join()];
+	};
+
+	convert.keyword.rgb = function (keyword) {
+		return cssKeywords[keyword];
+	};
+
+	convert.rgb.xyz = function (rgb) {
+		var r = rgb[0] / 255;
+		var g = rgb[1] / 255;
+		var b = rgb[2] / 255;
+
+		// assume sRGB
+		r = r > 0.04045 ? Math.pow((r + 0.055) / 1.055, 2.4) : r / 12.92;
+		g = g > 0.04045 ? Math.pow((g + 0.055) / 1.055, 2.4) : g / 12.92;
+		b = b > 0.04045 ? Math.pow((b + 0.055) / 1.055, 2.4) : b / 12.92;
+
+		var x = r * 0.4124 + g * 0.3576 + b * 0.1805;
+		var y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+		var z = r * 0.0193 + g * 0.1192 + b * 0.9505;
+
+		return [x * 100, y * 100, z * 100];
+	};
+
+	convert.rgb.lab = function (rgb) {
+		var xyz = convert.rgb.xyz(rgb);
+		var x = xyz[0];
+		var y = xyz[1];
+		var z = xyz[2];
+		var l;
+		var a;
+		var b;
+
+		x /= 95.047;
+		y /= 100;
+		z /= 108.883;
+
+		x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
+		y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787 * y + 16 / 116;
+		z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
+
+		l = 116 * y - 16;
+		a = 500 * (x - y);
+		b = 200 * (y - z);
+
+		return [l, a, b];
+	};
+
+	convert.hsl.rgb = function (hsl) {
+		var h = hsl[0] / 360;
+		var s = hsl[1] / 100;
+		var l = hsl[2] / 100;
+		var t1;
+		var t2;
+		var t3;
+		var rgb;
+		var val;
+
+		if (s === 0) {
+			val = l * 255;
+			return [val, val, val];
+		}
+
+		if (l < 0.5) {
+			t2 = l * (1 + s);
+		} else {
+			t2 = l + s - l * s;
+		}
+
+		t1 = 2 * l - t2;
+
+		rgb = [0, 0, 0];
+		for (var i = 0; i < 3; i++) {
+			t3 = h + 1 / 3 * -(i - 1);
+			if (t3 < 0) {
+				t3++;
+			}
+			if (t3 > 1) {
+				t3--;
+			}
+
+			if (6 * t3 < 1) {
+				val = t1 + (t2 - t1) * 6 * t3;
+			} else if (2 * t3 < 1) {
+				val = t2;
+			} else if (3 * t3 < 2) {
+				val = t1 + (t2 - t1) * (2 / 3 - t3) * 6;
+			} else {
+				val = t1;
+			}
+
+			rgb[i] = val * 255;
+		}
+
+		return rgb;
+	};
+
+	convert.hsl.hsv = function (hsl) {
+		var h = hsl[0];
+		var s = hsl[1] / 100;
+		var l = hsl[2] / 100;
+		var sv;
+		var v;
+
+		if (l === 0) {
+			// no need to do calc on black
+			// also avoids divide by 0 error
+			return [0, 0, 0];
+		}
+
+		l *= 2;
+		s *= l <= 1 ? l : 2 - l;
+		v = (l + s) / 2;
+		sv = 2 * s / (l + s);
+
+		return [h, sv * 100, v * 100];
+	};
+
+	convert.hsv.rgb = function (hsv) {
+		var h = hsv[0] / 60;
+		var s = hsv[1] / 100;
+		var v = hsv[2] / 100;
+		var hi = Math.floor(h) % 6;
+
+		var f = h - Math.floor(h);
+		var p = 255 * v * (1 - s);
+		var q = 255 * v * (1 - s * f);
+		var t = 255 * v * (1 - s * (1 - f));
+		v *= 255;
+
+		switch (hi) {
+			case 0:
+				return [v, t, p];
+			case 1:
+				return [q, v, p];
+			case 2:
+				return [p, v, t];
+			case 3:
+				return [p, q, v];
+			case 4:
+				return [t, p, v];
+			case 5:
+				return [v, p, q];
+		}
+	};
+
+	convert.hsv.hsl = function (hsv) {
+		var h = hsv[0];
+		var s = hsv[1] / 100;
+		var v = hsv[2] / 100;
+		var sl;
+		var l;
+
+		l = (2 - s) * v;
+		sl = s * v;
+		sl /= l <= 1 ? l : 2 - l;
+		sl = sl || 0;
+		l /= 2;
+
+		return [h, sl * 100, l * 100];
+	};
+
+	// http://dev.w3.org/csswg/css-color/#hwb-to-rgb
+	convert.hwb.rgb = function (hwb) {
+		var h = hwb[0] / 360;
+		var wh = hwb[1] / 100;
+		var bl = hwb[2] / 100;
+		var ratio = wh + bl;
+		var i;
+		var v;
+		var f;
+		var n;
+
+		// wh + bl cant be > 1
+		if (ratio > 1) {
+			wh /= ratio;
+			bl /= ratio;
+		}
+
+		i = Math.floor(6 * h);
+		v = 1 - bl;
+		f = 6 * h - i;
+
+		if ((i & 0x01) !== 0) {
+			f = 1 - f;
+		}
+
+		n = wh + f * (v - wh); // linear interpolation
+
+		var r;
+		var g;
+		var b;
+		switch (i) {
+			default:
+			case 6:
+			case 0:
+				r = v;g = n;b = wh;break;
+			case 1:
+				r = n;g = v;b = wh;break;
+			case 2:
+				r = wh;g = v;b = n;break;
+			case 3:
+				r = wh;g = n;b = v;break;
+			case 4:
+				r = n;g = wh;b = v;break;
+			case 5:
+				r = v;g = wh;b = n;break;
+		}
+
+		return [r * 255, g * 255, b * 255];
+	};
+
+	convert.cmyk.rgb = function (cmyk) {
+		var c = cmyk[0] / 100;
+		var m = cmyk[1] / 100;
+		var y = cmyk[2] / 100;
+		var k = cmyk[3] / 100;
+		var r;
+		var g;
+		var b;
+
+		r = 1 - Math.min(1, c * (1 - k) + k);
+		g = 1 - Math.min(1, m * (1 - k) + k);
+		b = 1 - Math.min(1, y * (1 - k) + k);
+
+		return [r * 255, g * 255, b * 255];
+	};
+
+	convert.xyz.rgb = function (xyz) {
+		var x = xyz[0] / 100;
+		var y = xyz[1] / 100;
+		var z = xyz[2] / 100;
+		var r;
+		var g;
+		var b;
+
+		r = x * 3.2406 + y * -1.5372 + z * -0.4986;
+		g = x * -0.9689 + y * 1.8758 + z * 0.0415;
+		b = x * 0.0557 + y * -0.2040 + z * 1.0570;
+
+		// assume sRGB
+		r = r > 0.0031308 ? 1.055 * Math.pow(r, 1.0 / 2.4) - 0.055 : r *= 12.92;
+
+		g = g > 0.0031308 ? 1.055 * Math.pow(g, 1.0 / 2.4) - 0.055 : g *= 12.92;
+
+		b = b > 0.0031308 ? 1.055 * Math.pow(b, 1.0 / 2.4) - 0.055 : b *= 12.92;
+
+		r = Math.min(Math.max(0, r), 1);
+		g = Math.min(Math.max(0, g), 1);
+		b = Math.min(Math.max(0, b), 1);
+
+		return [r * 255, g * 255, b * 255];
+	};
+
+	convert.xyz.lab = function (xyz) {
+		var x = xyz[0];
+		var y = xyz[1];
+		var z = xyz[2];
+		var l;
+		var a;
+		var b;
+
+		x /= 95.047;
+		y /= 100;
+		z /= 108.883;
+
+		x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787 * x + 16 / 116;
+		y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787 * y + 16 / 116;
+		z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787 * z + 16 / 116;
+
+		l = 116 * y - 16;
+		a = 500 * (x - y);
+		b = 200 * (y - z);
+
+		return [l, a, b];
+	};
+
+	convert.lab.xyz = function (lab) {
+		var l = lab[0];
+		var a = lab[1];
+		var b = lab[2];
+		var x;
+		var y;
+		var z;
+		var y2;
+
+		if (l <= 8) {
+			y = l * 100 / 903.3;
+			y2 = 7.787 * (y / 100) + 16 / 116;
+		} else {
+			y = 100 * Math.pow((l + 16) / 116, 3);
+			y2 = Math.pow(y / 100, 1 / 3);
+		}
+
+		x = x / 95.047 <= 0.008856 ? x = 95.047 * (a / 500 + y2 - 16 / 116) / 7.787 : 95.047 * Math.pow(a / 500 + y2, 3);
+		z = z / 108.883 <= 0.008859 ? z = 108.883 * (y2 - b / 200 - 16 / 116) / 7.787 : 108.883 * Math.pow(y2 - b / 200, 3);
+
+		return [x, y, z];
+	};
+
+	convert.lab.lch = function (lab) {
+		var l = lab[0];
+		var a = lab[1];
+		var b = lab[2];
+		var hr;
+		var h;
+		var c;
+
+		hr = Math.atan2(b, a);
+		h = hr * 360 / 2 / Math.PI;
+
+		if (h < 0) {
+			h += 360;
+		}
+
+		c = Math.sqrt(a * a + b * b);
+
+		return [l, c, h];
+	};
+
+	convert.lch.lab = function (lch) {
+		var l = lch[0];
+		var c = lch[1];
+		var h = lch[2];
+		var a;
+		var b;
+		var hr;
+
+		hr = h / 360 * 2 * Math.PI;
+		a = c * Math.cos(hr);
+		b = c * Math.sin(hr);
+
+		return [l, a, b];
+	};
+
+	convert.rgb.ansi16 = function (args) {
+		var r = args[0];
+		var g = args[1];
+		var b = args[2];
+		var value = 1 in arguments ? arguments[1] : convert.rgb.hsv(args)[2]; // hsv -> ansi16 optimization
+
+		value = Math.round(value / 50);
+
+		if (value === 0) {
+			return 30;
+		}
+
+		var ansi = 30 + (Math.round(b / 255) << 2 | Math.round(g / 255) << 1 | Math.round(r / 255));
+
+		if (value === 2) {
+			ansi += 60;
+		}
+
+		return ansi;
+	};
+
+	convert.hsv.ansi16 = function (args) {
+		// optimization here; we already know the value and don't need to get
+		// it converted for us.
+		return convert.rgb.ansi16(convert.hsv.rgb(args), args[2]);
+	};
+
+	convert.rgb.ansi256 = function (args) {
+		var r = args[0];
+		var g = args[1];
+		var b = args[2];
+
+		// we use the extended greyscale palette here, with the exception of
+		// black and white. normal palette only has 4 greyscale shades.
+		if (r === g && g === b) {
+			if (r < 8) {
+				return 16;
+			}
+
+			if (r > 248) {
+				return 231;
+			}
+
+			return Math.round((r - 8) / 247 * 24) + 232;
+		}
+
+		var ansi = 16 + 36 * Math.round(r / 255 * 5) + 6 * Math.round(g / 255 * 5) + Math.round(b / 255 * 5);
+
+		return ansi;
+	};
+
+	convert.ansi16.rgb = function (args) {
+		var color = args % 10;
+
+		// handle greyscale
+		if (color === 0 || color === 7) {
+			if (args > 50) {
+				color += 3.5;
+			}
+
+			color = color / 10.5 * 255;
+
+			return [color, color, color];
+		}
+
+		var mult = (~ ~(args > 50) + 1) * 0.5;
+		var r = (color & 1) * mult * 255;
+		var g = (color >> 1 & 1) * mult * 255;
+		var b = (color >> 2 & 1) * mult * 255;
+
+		return [r, g, b];
+	};
+
+	convert.ansi256.rgb = function (args) {
+		// handle greyscale
+		if (args >= 232) {
+			var c = (args - 232) * 10 + 8;
+			return [c, c, c];
+		}
+
+		args -= 16;
+
+		var rem;
+		var r = Math.floor(args / 36) / 5 * 255;
+		var g = Math.floor((rem = args % 36) / 6) / 5 * 255;
+		var b = rem % 6 / 5 * 255;
+
+		return [r, g, b];
+	};
+
+	convert.rgb.hex = function (args) {
+		var integer = ((Math.round(args[0]) & 0xFF) << 16) + ((Math.round(args[1]) & 0xFF) << 8) + (Math.round(args[2]) & 0xFF);
+
+		var string = integer.toString(16).toUpperCase();
+		return '000000'.substring(string.length) + string;
+	};
+
+	convert.hex.rgb = function (args) {
+		var match = args.toString(16).match(/[a-f0-9]{6}/i);
+		if (!match) {
+			return [0, 0, 0];
+		}
+
+		var integer = parseInt(match[0], 16);
+		var r = integer >> 16 & 0xFF;
+		var g = integer >> 8 & 0xFF;
+		var b = integer & 0xFF;
+
+		return [r, g, b];
+	};
+});
+
+var require$$0$10 = conversions && (typeof conversions === 'undefined' ? 'undefined' : babelHelpers.typeof(conversions)) === 'object' && 'default' in conversions ? conversions['default'] : conversions;
+
+var route = __commonjs(function (module) {
+	var conversions = require$$0$10;
+
+	/*
+ 	this function routes a model to all other models.
+ 
+ 	all functions that are routed have a property `.conversion` attached
+ 	to the returned synthetic function. This property is an array
+ 	of strings, each with the steps in between the 'from' and 'to'
+ 	color models (inclusive).
+ 
+ 	conversions that are not possible simply are not included.
+ */
+
+	// https://jsperf.com/object-keys-vs-for-in-with-closure/3
+	var models = Object.keys(conversions);
+
+	function buildGraph() {
+		var graph = {};
+
+		for (var len = models.length, i = 0; i < len; i++) {
+			graph[models[i]] = {
+				// http://jsperf.com/1-vs-infinity
+				// micro-opt, but this is simple.
+				distance: -1,
+				parent: null
+			};
+		}
+
+		return graph;
+	}
+
+	// https://en.wikipedia.org/wiki/Breadth-first_search
+	function deriveBFS(fromModel) {
+		var graph = buildGraph();
+		var queue = [fromModel]; // unshift -> queue -> pop
+
+		graph[fromModel].distance = 0;
+
+		while (queue.length) {
+			var current = queue.pop();
+			var adjacents = Object.keys(conversions[current]);
+
+			for (var len = adjacents.length, i = 0; i < len; i++) {
+				var adjacent = adjacents[i];
+				var node = graph[adjacent];
+
+				if (node.distance === -1) {
+					node.distance = graph[current].distance + 1;
+					node.parent = current;
+					queue.unshift(adjacent);
+				}
+			}
+		}
+
+		return graph;
+	}
+
+	function link(from, to) {
+		return function (args) {
+			return to(from(args));
+		};
+	}
+
+	function wrapConversion(toModel, graph) {
+		var path = [graph[toModel].parent, toModel];
+		var fn = conversions[graph[toModel].parent][toModel];
+
+		var cur = graph[toModel].parent;
+		while (graph[cur].parent) {
+			path.unshift(graph[cur].parent);
+			fn = link(conversions[graph[cur].parent][cur], fn);
+			cur = graph[cur].parent;
+		}
+
+		fn.conversion = path;
+		return fn;
+	}
+
+	module.exports = function (fromModel) {
+		var graph = deriveBFS(fromModel);
+		var conversion = {};
+
+		var models = Object.keys(graph);
+		for (var len = models.length, i = 0; i < len; i++) {
+			var toModel = models[i];
+			var node = graph[toModel];
+
+			if (node.parent === null) {
+				// no possible conversion, or this node is the source model.
+				continue;
+			}
+
+			conversion[toModel] = wrapConversion(toModel, graph);
+		}
+
+		return conversion;
+	};
+});
+
+var require$$0$9 = route && (typeof route === 'undefined' ? 'undefined' : babelHelpers.typeof(route)) === 'object' && 'default' in route ? route['default'] : route;
+
+var index$10 = __commonjs(function (module) {
+	var conversions = require$$0$10;
+	var route = require$$0$9;
+
+	var convert = {};
+
+	var models = Object.keys(conversions);
+
+	function wrapRaw(fn) {
+		var wrappedFn = function wrappedFn(args) {
+			if (args === undefined || args === null) {
+				return args;
+			}
+
+			if (arguments.length > 1) {
+				args = Array.prototype.slice.call(arguments);
+			}
+
+			return fn(args);
+		};
+
+		// preserve .conversion property if there is one
+		if ('conversion' in fn) {
+			wrappedFn.conversion = fn.conversion;
+		}
+
+		return wrappedFn;
+	}
+
+	function wrapRounded(fn) {
+		var wrappedFn = function wrappedFn(args) {
+			if (args === undefined || args === null) {
+				return args;
+			}
+
+			if (arguments.length > 1) {
+				args = Array.prototype.slice.call(arguments);
+			}
+
+			var result = fn(args);
+
+			// we're assuming the result is an array here.
+			// see notice in conversions.js; don't use box types
+			// in conversion functions.
+			if ((typeof result === 'undefined' ? 'undefined' : babelHelpers.typeof(result)) === 'object') {
+				for (var len = result.length, i = 0; i < len; i++) {
+					result[i] = Math.round(result[i]);
+				}
+			}
+
+			return result;
+		};
+
+		// preserve .conversion property if there is one
+		if ('conversion' in fn) {
+			wrappedFn.conversion = fn.conversion;
+		}
+
+		return wrappedFn;
+	}
+
+	models.forEach(function (fromModel) {
+		convert[fromModel] = {};
+
+		var routes = route(fromModel);
+		var routeModels = Object.keys(routes);
+
+		routeModels.forEach(function (toModel) {
+			var fn = routes[toModel];
+
+			convert[fromModel][toModel] = wrapRounded(fn);
+			convert[fromModel][toModel].raw = wrapRaw(fn);
+		});
+	});
+
+	module.exports = convert;
+});
+
+var require$$0$8 = index$10 && (typeof index$10 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$10)) === 'object' && 'default' in index$10 ? index$10['default'] : index$10;
+
 var index$9 = __commonjs(function (module) {
 	'use strict';
 
+	var colorConvert = require$$0$8;
+
+	function wrapAnsi16(fn, offset) {
+		return function () {
+			var code = fn.apply(colorConvert, arguments);
+			return '\u001b[' + (code + offset) + 'm';
+		};
+	}
+
+	function wrapAnsi256(fn, offset) {
+		return function () {
+			var code = fn.apply(colorConvert, arguments);
+			return '\u001b[' + (38 + offset) + ';5;' + code + 'm';
+		};
+	}
+
+	function wrapAnsi16m(fn, offset) {
+		return function () {
+			var rgb = fn.apply(colorConvert, arguments);
+			return '\u001b[' + (38 + offset) + ';2;' + rgb[0] + ';' + rgb[1] + ';' + rgb[2] + 'm';
+		};
+	}
+
 	function assembleStyles() {
 		var styles = {
-			modifiers: {
+			modifier: {
 				reset: [0, 0],
-				bold: [1, 22], // 21 isn't widely supported and 22 does the same thing
+				// 21 isn't widely supported and 22 does the same thing
+				bold: [1, 22],
 				dim: [2, 22],
 				italic: [3, 23],
 				underline: [4, 24],
@@ -2949,7 +3897,7 @@ var index$9 = __commonjs(function (module) {
 				hidden: [8, 28],
 				strikethrough: [9, 29]
 			},
-			colors: {
+			color: {
 				black: [30, 39],
 				red: [31, 39],
 				green: [32, 39],
@@ -2960,7 +3908,7 @@ var index$9 = __commonjs(function (module) {
 				white: [37, 39],
 				gray: [90, 39]
 			},
-			bgColors: {
+			bgColor: {
 				bgBlack: [40, 49],
 				bgRed: [41, 49],
 				bgGreen: [42, 49],
@@ -2973,7 +3921,7 @@ var index$9 = __commonjs(function (module) {
 		};
 
 		// fix humans
-		styles.colors.grey = styles.colors.gray;
+		styles.color.grey = styles.color.gray;
 
 		Object.keys(styles).forEach(function (groupName) {
 			var group = styles[groupName];
@@ -2993,6 +3941,48 @@ var index$9 = __commonjs(function (module) {
 			});
 		});
 
+		function rgb2rgb(r, g, b) {
+			return [r, g, b];
+		}
+
+		styles.color.close = '\u001b[39m';
+		styles.bgColor.close = '\u001b[49m';
+
+		styles.color.ansi = {};
+		styles.color.ansi256 = {};
+		styles.color.ansi16m = {
+			rgb: wrapAnsi16m(rgb2rgb, 0)
+		};
+
+		styles.bgColor.ansi = {};
+		styles.bgColor.ansi256 = {};
+		styles.bgColor.ansi16m = {
+			rgb: wrapAnsi16m(rgb2rgb, 10)
+		};
+
+		for (var key in colorConvert) {
+			if (!colorConvert.hasOwnProperty(key) || babelHelpers.typeof(colorConvert[key]) !== 'object') {
+				continue;
+			}
+
+			var suite = colorConvert[key];
+
+			if ('ansi16' in suite) {
+				styles.color.ansi[key] = wrapAnsi16(suite.ansi16, 0);
+				styles.bgColor.ansi[key] = wrapAnsi16(suite.ansi16, 10);
+			}
+
+			if ('ansi256' in suite) {
+				styles.color.ansi256[key] = wrapAnsi256(suite.ansi256, 0);
+				styles.bgColor.ansi256[key] = wrapAnsi256(suite.ansi256, 10);
+			}
+
+			if ('rgb' in suite) {
+				styles.color.ansi16m[key] = wrapAnsi16m(suite.rgb, 0);
+				styles.bgColor.ansi16m[key] = wrapAnsi16m(suite.rgb, 10);
+			}
+		}
+
 		return styles;
 	}
 
@@ -3004,7 +3994,7 @@ var index$9 = __commonjs(function (module) {
 
 var require$$3$2 = index$9 && (typeof index$9 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$9)) === 'object' && 'default' in index$9 ? index$9['default'] : index$9;
 
-var index$10 = __commonjs(function (module) {
+var index$11 = __commonjs(function (module) {
 	'use strict';
 
 	var matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g;
@@ -3018,7 +4008,7 @@ var index$10 = __commonjs(function (module) {
 	};
 });
 
-var require$$4$2 = index$10 && (typeof index$10 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$10)) === 'object' && 'default' in index$10 ? index$10['default'] : index$10;
+var require$$4$2 = index$11 && (typeof index$11 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$11)) === 'object' && 'default' in index$11 ? index$11['default'] : index$11;
 
 var index$4 = __commonjs(function (module) {
 	'use strict';
@@ -3142,7 +4132,7 @@ var index$4 = __commonjs(function (module) {
 
 var require$$1$5 = index$4 && (typeof index$4 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$4)) === 'object' && 'default' in index$4 ? index$4['default'] : index$4;
 
-var index$12 = __commonjs(function (module) {
+var index$13 = __commonjs(function (module) {
   /*!
    * time-stamp <https://github.com/jonschlinkert/time-stamp>
    *
@@ -3192,16 +4182,16 @@ var index$12 = __commonjs(function (module) {
   }
 });
 
-var require$$0$8 = index$12 && (typeof index$12 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$12)) === 'object' && 'default' in index$12 ? index$12['default'] : index$12;
+var require$$0$12 = index$13 && (typeof index$13 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$13)) === 'object' && 'default' in index$13 ? index$13['default'] : index$13;
 
-var index$11 = __commonjs(function (module) {
+var index$12 = __commonjs(function (module) {
   'use strict';
   /*
     Initial code from https://github.com/gulpjs/gulp-util/blob/v3.0.6/lib/log.js
    */
 
   var chalk = require$$1$5;
-  var timestamp = require$$0$8;
+  var timestamp = require$$0$12;
 
   function getTimestamp() {
     return '[' + chalk.grey(timestamp('HH:mm:ss')) + ']';
@@ -3225,7 +4215,7 @@ var index$11 = __commonjs(function (module) {
   module.exports.error = error;
 });
 
-var fancyLog = index$11 && (typeof index$11 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$11)) === 'object' && 'default' in index$11 ? index$11['default'] : index$11;
+var fancyLog = index$12 && (typeof index$12 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$12)) === 'object' && 'default' in index$12 ? index$12['default'] : index$12;
 
 var Default$2 = {
   debug: false,
@@ -3408,7 +4398,7 @@ var Base = function () {
   return Base;
 }();
 
-var index$13 = __commonjs(function (module) {
+var index$14 = __commonjs(function (module) {
 	'use strict';
 
 	function posix(path) {
@@ -3431,7 +4421,7 @@ var index$13 = __commonjs(function (module) {
 	module.exports.win32 = win32;
 });
 
-var require$$1$7 = index$13 && (typeof index$13 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$13)) === 'object' && 'default' in index$13 ? index$13['default'] : index$13;
+var require$$1$7 = index$14 && (typeof index$14 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$14)) === 'object' && 'default' in index$14 ? index$14['default'] : index$14;
 
 var Paths = function () {
   function Paths() {
@@ -3713,15 +4703,15 @@ var assign = __commonjs(function (module) {
   module.exports = Object.assign || _assign;
 });
 
-var require$$0$11 = assign && (typeof assign === 'undefined' ? 'undefined' : babelHelpers.typeof(assign)) === 'object' && 'default' in assign ? assign['default'] : assign;
+var require$$0$15 = assign && (typeof assign === 'undefined' ? 'undefined' : babelHelpers.typeof(assign)) === 'object' && 'default' in assign ? assign['default'] : assign;
 
-var index$16 = __commonjs(function (module) {
+var index$17 = __commonjs(function (module) {
   var assert = require$$5;
   var fs = require$$1;
   var path = require$$2;
   var Readable = require$$2$1.Readable;
   var util = require$$1$1;
-  var assign = require$$0$11;
+  var assign = require$$0$15;
 
   function Walker(dir, options) {
     assert.strictEqual(typeof dir === 'undefined' ? 'undefined' : babelHelpers.typeof(dir), 'string', '`dir` parameter should be of type string. Got type: ' + (typeof dir === 'undefined' ? 'undefined' : babelHelpers.typeof(dir)));
@@ -3772,17 +4762,17 @@ var index$16 = __commonjs(function (module) {
   module.exports = walk;
 });
 
-var require$$0$10 = index$16 && (typeof index$16 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$16)) === 'object' && 'default' in index$16 ? index$16['default'] : index$16;
+var require$$0$14 = index$17 && (typeof index$17 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$17)) === 'object' && 'default' in index$17 ? index$17['default'] : index$17;
 
-var index$15 = __commonjs(function (module) {
-  var klaw = require$$0$10;
+var index$16 = __commonjs(function (module) {
+  var klaw = require$$0$14;
 
   module.exports = {
     walk: klaw
   };
 });
 
-var require$$0$9 = index$15 && (typeof index$15 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$15)) === 'object' && 'default' in index$15 ? index$15['default'] : index$15;
+var require$$0$13 = index$16 && (typeof index$16 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$16)) === 'object' && 'default' in index$16 ? index$16['default'] : index$16;
 
 var fs$1 = __commonjs(function (module) {
   'use strict';
@@ -4461,7 +5451,7 @@ var mkdirsSync$1 = __commonjs(function (module) {
   module.exports = mkdirsSync;
 });
 
-var require$$0$13 = mkdirsSync$1 && (typeof mkdirsSync$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(mkdirsSync$1)) === 'object' && 'default' in mkdirsSync$1 ? mkdirsSync$1['default'] : mkdirsSync$1;
+var require$$0$17 = mkdirsSync$1 && (typeof mkdirsSync$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(mkdirsSync$1)) === 'object' && 'default' in mkdirsSync$1 ? mkdirsSync$1['default'] : mkdirsSync$1;
 
 var mkdirs$1 = __commonjs(function (module) {
   var fs = require$$3$3;
@@ -4520,24 +5510,24 @@ var mkdirs$1 = __commonjs(function (module) {
 
 var require$$1$10 = mkdirs$1 && (typeof mkdirs$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(mkdirs$1)) === 'object' && 'default' in mkdirs$1 ? mkdirs$1['default'] : mkdirs$1;
 
-var index$18 = __commonjs(function (module) {
+var index$19 = __commonjs(function (module) {
   module.exports = {
     mkdirs: require$$1$10,
-    mkdirsSync: require$$0$13,
+    mkdirsSync: require$$0$17,
     // alias
     mkdirp: require$$1$10,
-    mkdirpSync: require$$0$13,
+    mkdirpSync: require$$0$17,
     ensureDir: require$$1$10,
-    ensureDirSync: require$$0$13
+    ensureDirSync: require$$0$17
   };
 });
 
-var require$$0$12 = index$18 && (typeof index$18 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$18)) === 'object' && 'default' in index$18 ? index$18['default'] : index$18;
+var require$$0$16 = index$19 && (typeof index$19 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$19)) === 'object' && 'default' in index$19 ? index$19['default'] : index$19;
 
-var index$17 = __commonjs(function (module) {
+var index$18 = __commonjs(function (module) {
   var path = require$$2;
   var fs = require$$3$3;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function outputFile(file, data, encoding, callback) {
     if (typeof encoding === 'function') {
@@ -4572,7 +5562,7 @@ var index$17 = __commonjs(function (module) {
   };
 });
 
-var require$$1$8 = index$17 && (typeof index$17 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$17)) === 'object' && 'default' in index$17 ? index$17['default'] : index$17;
+var require$$1$8 = index$18 && (typeof index$18 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$18)) === 'object' && 'default' in index$18 ? index$18['default'] : index$18;
 
 var symlinkType = __commonjs(function (module) {
   var fs = require$$3$3;
@@ -4604,7 +5594,7 @@ var symlinkType = __commonjs(function (module) {
   };
 });
 
-var require$$0$15 = symlinkType && (typeof symlinkType === 'undefined' ? 'undefined' : babelHelpers.typeof(symlinkType)) === 'object' && 'default' in symlinkType ? symlinkType['default'] : symlinkType;
+var require$$0$19 = symlinkType && (typeof symlinkType === 'undefined' ? 'undefined' : babelHelpers.typeof(symlinkType)) === 'object' && 'default' in symlinkType ? symlinkType['default'] : symlinkType;
 var symlinkType = symlinkType.symlinkType;
 
 var symlinkPaths = __commonjs(function (module) {
@@ -4712,7 +5702,7 @@ var require$$1$11 = symlinkPaths && (typeof symlinkPaths === 'undefined' ? 'unde
 var symlink = __commonjs(function (module) {
   var path = require$$2;
   var fs = require$$3$3;
-  var _mkdirs = require$$0$12;
+  var _mkdirs = require$$0$16;
   var mkdirs = _mkdirs.mkdirs;
   var mkdirsSync = _mkdirs.mkdirsSync;
 
@@ -4720,7 +5710,7 @@ var symlink = __commonjs(function (module) {
   var symlinkPaths = _symlinkPaths.symlinkPaths;
   var symlinkPathsSync = _symlinkPaths.symlinkPathsSync;
 
-  var _symlinkType = require$$0$15;
+  var _symlinkType = require$$0$19;
   var symlinkType = _symlinkType.symlinkType;
   var symlinkTypeSync = _symlinkType.symlinkTypeSync;
 
@@ -4774,12 +5764,12 @@ var symlink = __commonjs(function (module) {
   };
 });
 
-var require$$0$14 = symlink && (typeof symlink === 'undefined' ? 'undefined' : babelHelpers.typeof(symlink)) === 'object' && 'default' in symlink ? symlink['default'] : symlink;
+var require$$0$18 = symlink && (typeof symlink === 'undefined' ? 'undefined' : babelHelpers.typeof(symlink)) === 'object' && 'default' in symlink ? symlink['default'] : symlink;
 
 var link = __commonjs(function (module) {
   var path = require$$2;
   var fs = require$$3$3;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function createLink(srcpath, dstpath, callback) {
     function makeLink(srcpath, dstpath) {
@@ -4842,7 +5832,7 @@ var require$$1$12 = link && (typeof link === 'undefined' ? 'undefined' : babelHe
 var file = __commonjs(function (module) {
   var path = require$$2;
   var fs = require$$3$3;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function createFile(file, callback) {
     function makeFile() {
@@ -4887,10 +5877,10 @@ var file = __commonjs(function (module) {
 
 var require$$2$5 = file && (typeof file === 'undefined' ? 'undefined' : babelHelpers.typeof(file)) === 'object' && 'default' in file ? file['default'] : file;
 
-var index$19 = __commonjs(function (module) {
+var index$20 = __commonjs(function (module) {
   var file = require$$2$5;
   var link = require$$1$12;
-  var symlink = require$$0$14;
+  var symlink = require$$0$18;
 
   module.exports = {
     // file
@@ -4911,7 +5901,7 @@ var index$19 = __commonjs(function (module) {
   };
 });
 
-var require$$2$4 = index$19 && (typeof index$19 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$19)) === 'object' && 'default' in index$19 ? index$19['default'] : index$19;
+var require$$2$4 = index$20 && (typeof index$20 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$20)) === 'object' && 'default' in index$20 ? index$20['default'] : index$20;
 
 var wrappy = __commonjs(function (module) {
   // Returns a wrapper function that returns a wrapped callback
@@ -4974,12 +5964,12 @@ var once = __commonjs(function (module) {
   }
 });
 
-var require$$0$17 = once && (typeof once === 'undefined' ? 'undefined' : babelHelpers.typeof(once)) === 'object' && 'default' in once ? once['default'] : once;
+var require$$0$21 = once && (typeof once === 'undefined' ? 'undefined' : babelHelpers.typeof(once)) === 'object' && 'default' in once ? once['default'] : once;
 
 var inflight = __commonjs(function (module) {
   var wrappy = require$$1$14;
   var reqs = Object.create(null);
-  var once = require$$0$17;
+  var once = require$$0$21;
 
   module.exports = wrappy(inflight);
 
@@ -5026,7 +6016,7 @@ var inflight = __commonjs(function (module) {
 
 var require$$2$6 = inflight && (typeof inflight === 'undefined' ? 'undefined' : babelHelpers.typeof(inflight)) === 'object' && 'default' in inflight ? inflight['default'] : inflight;
 
-var index$23 = __commonjs(function (module) {
+var index$24 = __commonjs(function (module) {
   module.exports = balanced;
   function balanced(a, b, str) {
     var r = range(a, b, str);
@@ -5079,9 +6069,9 @@ var index$23 = __commonjs(function (module) {
   }
 });
 
-var require$$0$20 = index$23 && (typeof index$23 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$23)) === 'object' && 'default' in index$23 ? index$23['default'] : index$23;
+var require$$0$24 = index$24 && (typeof index$24 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$24)) === 'object' && 'default' in index$24 ? index$24['default'] : index$24;
 
-var index$24 = __commonjs(function (module) {
+var index$25 = __commonjs(function (module) {
     module.exports = function (xs, fn) {
         var res = [];
         for (var i = 0; i < xs.length; i++) {
@@ -5096,11 +6086,11 @@ var index$24 = __commonjs(function (module) {
     };
 });
 
-var require$$1$15 = index$24 && (typeof index$24 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$24)) === 'object' && 'default' in index$24 ? index$24['default'] : index$24;
+var require$$1$15 = index$25 && (typeof index$25 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$25)) === 'object' && 'default' in index$25 ? index$25['default'] : index$25;
 
-var index$22 = __commonjs(function (module) {
+var index$23 = __commonjs(function (module) {
   var concatMap = require$$1$15;
-  var balanced = require$$0$20;
+  var balanced = require$$0$24;
 
   module.exports = expandTop;
 
@@ -5269,7 +6259,7 @@ var index$22 = __commonjs(function (module) {
   }
 });
 
-var require$$0$19 = index$22 && (typeof index$22 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$22)) === 'object' && 'default' in index$22 ? index$22['default'] : index$22;
+var require$$0$23 = index$23 && (typeof index$23 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$23)) === 'object' && 'default' in index$23 ? index$23['default'] : index$23;
 
 var minimatch = __commonjs(function (module) {
   module.exports = minimatch;
@@ -5281,7 +6271,7 @@ var minimatch = __commonjs(function (module) {
   } catch (er) {}
 
   var GLOBSTAR = minimatch.GLOBSTAR = Minimatch.GLOBSTAR = {};
-  var expand = require$$0$19;
+  var expand = require$$0$23;
 
   // any single thing other than /
   // don't need to escape / when using new RegExp()
@@ -6267,6 +7257,7 @@ var common$1 = __commonjs(function (module, exports) {
     self.root = path.resolve(self.root);
     if (process.platform === "win32") self.root = self.root.replace(/\\/g, "/");
 
+    self.cwdAbs = makeAbs(self, self.cwd);
     self.nomount = !!options.nomount;
 
     // disable comments and negation in Minimatch.
@@ -6310,7 +7301,10 @@ var common$1 = __commonjs(function (module, exports) {
       }
       if (self.nodir) {
         all = all.filter(function (e) {
-          return !/\/$/.test(e);
+          var notDir = !/\/$/.test(e);
+          var c = self.cache[e] || self.cache[makeAbs(self, e)];
+          if (notDir && c) notDir = c !== 'DIR' && !Array.isArray(c);
+          return notDir;
         });
       }
     }
@@ -6354,6 +7348,9 @@ var common$1 = __commonjs(function (module, exports) {
     } else {
       abs = path.resolve(f);
     }
+
+    if (process.platform === 'win32') abs = abs.replace(/\\/g, '/');
+
     return abs;
   }
 
@@ -6376,7 +7373,7 @@ var common$1 = __commonjs(function (module, exports) {
   }
 });
 
-var require$$0$18 = common$1 && (typeof common$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(common$1)) === 'object' && 'default' in common$1 ? common$1['default'] : common$1;
+var require$$0$22 = common$1 && (typeof common$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(common$1)) === 'object' && 'default' in common$1 ? common$1['default'] : common$1;
 
 var sync = __commonjs(function (module) {
   module.exports = globSync;
@@ -6390,7 +7387,7 @@ var sync = __commonjs(function (module) {
   var path = require$$2;
   var assert = require$$5;
   var isAbsolute = require$$1$7;
-  var common = require$$0$18;
+  var common = require$$0$22;
   var alphasort = common.alphasort;
   var alphasorti = common.alphasorti;
   var setopts = common.setopts;
@@ -6641,10 +7638,11 @@ var sync = __commonjs(function (module) {
       case 'ENOTSUP': // https://github.com/isaacs/node-glob/issues/205
       case 'ENOTDIR':
         // totally normal. means it *does* exist.
-        this.cache[this._makeAbs(f)] = 'FILE';
-        if (f === this.cwd) {
-          var error = new Error(er.code + ' invalid cwd ' + f);
-          error.path = f;
+        var abs = this._makeAbs(f);
+        this.cache[abs] = 'FILE';
+        if (abs === this.cwdAbs) {
+          var error = new Error(er.code + ' invalid cwd ' + this.cwd);
+          error.path = this.cwd;
           error.code = er.code;
           throw error;
         }
@@ -6871,7 +7869,7 @@ var glob = __commonjs(function (module) {
   var assert = require$$5;
   var isAbsolute = require$$1$7;
   var globSync = require$$4$4;
-  var common = require$$0$18;
+  var common = require$$0$22;
   var alphasort = common.alphasort;
   var alphasorti = common.alphasorti;
   var setopts = common.setopts;
@@ -6881,7 +7879,7 @@ var glob = __commonjs(function (module) {
   var childrenIgnored = common.childrenIgnored;
   var isIgnored = common.isIgnored;
 
-  var once = require$$0$17;
+  var once = require$$0$21;
 
   function glob(pattern, options, cb) {
     if (typeof options === 'function') cb = options, options = {};
@@ -6977,13 +7975,23 @@ var glob = __commonjs(function (module) {
 
     if (n === 0) return done();
 
+    var sync = true;
     for (var i = 0; i < n; i++) {
       this._process(this.minimatch.set[i], i, false, done);
     }
+    sync = false;
 
     function done() {
       --self._processing;
-      if (self._processing <= 0) self._finish();
+      if (self._processing <= 0) {
+        if (sync) {
+          process.nextTick(function () {
+            self._finish();
+          });
+        } else {
+          self._finish();
+        }
+      }
     }
   }
 
@@ -7330,10 +8338,11 @@ var glob = __commonjs(function (module) {
       case 'ENOTSUP': // https://github.com/isaacs/node-glob/issues/205
       case 'ENOTDIR':
         // totally normal. means it *does* exist.
-        this.cache[this._makeAbs(f)] = 'FILE';
-        if (f === this.cwd) {
-          var error = new Error(er.code + ' invalid cwd ' + f);
-          error.path = f;
+        var abs = this._makeAbs(f);
+        this.cache[abs] = 'FILE';
+        if (abs === this.cwdAbs) {
+          var error = new Error(er.code + ' invalid cwd ' + this.cwd);
+          error.path = this.cwd;
           error.code = er.code;
           this.emit('error', error);
           this.abort();
@@ -7788,7 +8797,7 @@ var rimraf = __commonjs(function (module) {
 
 var require$$1$13 = rimraf && (typeof rimraf === 'undefined' ? 'undefined' : babelHelpers.typeof(rimraf)) === 'object' && 'default' in rimraf ? rimraf['default'] : rimraf;
 
-var index$21 = __commonjs(function (module) {
+var index$22 = __commonjs(function (module) {
   var rimraf = require$$1$13;
 
   function removeSync(dir) {
@@ -7805,15 +8814,16 @@ var index$21 = __commonjs(function (module) {
   };
 });
 
-var require$$0$16 = index$21 && (typeof index$21 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$21)) === 'object' && 'default' in index$21 ? index$21['default'] : index$21;
+var require$$0$20 = index$22 && (typeof index$22 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$22)) === 'object' && 'default' in index$22 ? index$22['default'] : index$22;
 
-var index$20 = __commonjs(function (module) {
+var index$21 = __commonjs(function (module) {
   var fs = require$$1;
   var path = require$$2;
-  var mkdir = require$$0$12;
-  var remove = require$$0$16;
+  var mkdir = require$$0$16;
+  var remove = require$$0$20;
 
   function emptyDir(dir, callback) {
+    callback = callback || function () {};
     fs.readdir(dir, function (err, items) {
       if (err) return mkdir.mkdirs(dir, callback);
 
@@ -7856,12 +8866,12 @@ var index$20 = __commonjs(function (module) {
   };
 });
 
-var require$$3$5 = index$20 && (typeof index$20 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$20)) === 'object' && 'default' in index$20 ? index$20['default'] : index$20;
+var require$$3$5 = index$21 && (typeof index$21 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$21)) === 'object' && 'default' in index$21 ? index$21['default'] : index$21;
 
 var createOutputStream$1 = __commonjs(function (module) {
   var path = require$$2;
   var fs = require$$1;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
   var WriteStream = fs.WriteStream;
 
   function createOutputStream(file, options) {
@@ -7904,15 +8914,15 @@ var createOutputStream$1 = __commonjs(function (module) {
   module.exports = createOutputStream;
 });
 
-var require$$0$21 = createOutputStream$1 && (typeof createOutputStream$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(createOutputStream$1)) === 'object' && 'default' in createOutputStream$1 ? createOutputStream$1['default'] : createOutputStream$1;
+var require$$0$25 = createOutputStream$1 && (typeof createOutputStream$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(createOutputStream$1)) === 'object' && 'default' in createOutputStream$1 ? createOutputStream$1['default'] : createOutputStream$1;
 
-var index$25 = __commonjs(function (module) {
+var index$26 = __commonjs(function (module) {
   module.exports = {
-    createOutputStream: require$$0$21
+    createOutputStream: require$$0$25
   };
 });
 
-var require$$4$5 = index$25 && (typeof index$25 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$25)) === 'object' && 'default' in index$25 ? index$25['default'] : index$25;
+var require$$4$5 = index$26 && (typeof index$26 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$26)) === 'object' && 'default' in index$26 ? index$26['default'] : index$26;
 
 var utimes = __commonjs(function (module) {
   var fs = require$$3$3;
@@ -7986,14 +8996,14 @@ var utimes = __commonjs(function (module) {
   };
 });
 
-var require$$0$22 = utimes && (typeof utimes === 'undefined' ? 'undefined' : babelHelpers.typeof(utimes)) === 'object' && 'default' in utimes ? utimes['default'] : utimes;
+var require$$0$26 = utimes && (typeof utimes === 'undefined' ? 'undefined' : babelHelpers.typeof(utimes)) === 'object' && 'default' in utimes ? utimes['default'] : utimes;
 
 var ncp = __commonjs(function (module) {
   // imported from ncp (this is temporary, will rewrite)
 
   var fs = require$$3$3;
   var path = require$$2;
-  var utimes = require$$0$22;
+  var utimes = require$$0$26;
 
   function ncp(source, dest, options, callback) {
     if (!callback) {
@@ -8236,7 +9246,7 @@ var ncp = __commonjs(function (module) {
 
 var require$$1$16 = ncp && (typeof ncp === 'undefined' ? 'undefined' : babelHelpers.typeof(ncp)) === 'object' && 'default' in ncp ? ncp['default'] : ncp;
 
-var index$26 = __commonjs(function (module) {
+var index$27 = __commonjs(function (module) {
   // most of this code was written by Andrew Kelley
   // licensed under the BSD license: see
   // https://github.com/andrewrk/node-mv/blob/master/package.json
@@ -8247,7 +9257,7 @@ var index$26 = __commonjs(function (module) {
   var ncp = require$$1$16;
   var path = require$$2;
   var rimraf = require$$1$13;
-  var mkdirp = require$$0$12.mkdirs;
+  var mkdirp = require$$0$16.mkdirs;
 
   function mv(source, dest, options, callback) {
     if (typeof options === 'function') {
@@ -8400,9 +9410,9 @@ var index$26 = __commonjs(function (module) {
   };
 });
 
-var require$$5$3 = index$26 && (typeof index$26 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$26)) === 'object' && 'default' in index$26 ? index$26['default'] : index$26;
+var require$$5$3 = index$27 && (typeof index$27 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$27)) === 'object' && 'default' in index$27 ? index$27['default'] : index$27;
 
-var index$28 = __commonjs(function (module) {
+var index$29 = __commonjs(function (module) {
   var fs = require$$1;
 
   function readFile(file, options, callback) {
@@ -8486,10 +9496,10 @@ var index$28 = __commonjs(function (module) {
   module.exports = jsonfile;
 });
 
-var require$$0$24 = index$28 && (typeof index$28 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$28)) === 'object' && 'default' in index$28 ? index$28['default'] : index$28;
+var require$$0$28 = index$29 && (typeof index$29 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$29)) === 'object' && 'default' in index$29 ? index$29['default'] : index$29;
 
 var jsonfile$1 = __commonjs(function (module) {
-  var jsonFile = require$$0$24;
+  var jsonFile = require$$0$28;
 
   module.exports = {
     // jsonfile exports
@@ -8511,7 +9521,7 @@ var outputJson = __commonjs(function (module) {
   var fs = require$$3$3;
   var path = require$$2;
   var jsonFile = require$$1$17;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function outputJson(file, data, options, callback) {
     if (typeof options === 'function') {
@@ -8534,13 +9544,13 @@ var outputJson = __commonjs(function (module) {
   module.exports = outputJson;
 });
 
-var require$$0$23 = outputJson && (typeof outputJson === 'undefined' ? 'undefined' : babelHelpers.typeof(outputJson)) === 'object' && 'default' in outputJson ? outputJson['default'] : outputJson;
+var require$$0$27 = outputJson && (typeof outputJson === 'undefined' ? 'undefined' : babelHelpers.typeof(outputJson)) === 'object' && 'default' in outputJson ? outputJson['default'] : outputJson;
 
 var outputJsonSync = __commonjs(function (module) {
   var fs = require$$3$3;
   var path = require$$2;
   var jsonFile = require$$1$17;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function outputJsonSync(file, data, options) {
     var dir = path.dirname(file);
@@ -8557,19 +9567,19 @@ var outputJsonSync = __commonjs(function (module) {
 
 var require$$1$18 = outputJsonSync && (typeof outputJsonSync === 'undefined' ? 'undefined' : babelHelpers.typeof(outputJsonSync)) === 'object' && 'default' in outputJsonSync ? outputJsonSync['default'] : outputJsonSync;
 
-var index$27 = __commonjs(function (module) {
+var index$28 = __commonjs(function (module) {
   var jsonFile = require$$1$17;
 
   jsonFile.outputJsonSync = require$$1$18;
-  jsonFile.outputJson = require$$0$23;
+  jsonFile.outputJson = require$$0$27;
   // aliases
   jsonFile.outputJSONSync = require$$1$18;
-  jsonFile.outputJSON = require$$0$23;
+  jsonFile.outputJSON = require$$0$27;
 
   module.exports = jsonFile;
 });
 
-var require$$6$2 = index$27 && (typeof index$27 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$27)) === 'object' && 'default' in index$27 ? index$27['default'] : index$27;
+var require$$6$2 = index$28 && (typeof index$28 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$28)) === 'object' && 'default' in index$28 ? index$28['default'] : index$28;
 
 var copyFileSync = __commonjs(function (module) {
   var fs = require$$3$3;
@@ -8619,7 +9629,7 @@ var copySync$1 = __commonjs(function (module) {
   var fs = require$$3$3;
   var path = require$$2;
   var copyFileSync = require$$1$19;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function copySync(src, dest, options) {
     if (typeof options === 'function' || options instanceof RegExp) {
@@ -8666,21 +9676,21 @@ var copySync$1 = __commonjs(function (module) {
   module.exports = copySync;
 });
 
-var require$$0$25 = copySync$1 && (typeof copySync$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(copySync$1)) === 'object' && 'default' in copySync$1 ? copySync$1['default'] : copySync$1;
+var require$$0$29 = copySync$1 && (typeof copySync$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(copySync$1)) === 'object' && 'default' in copySync$1 ? copySync$1['default'] : copySync$1;
 
-var index$29 = __commonjs(function (module) {
+var index$30 = __commonjs(function (module) {
   module.exports = {
-    copySync: require$$0$25
+    copySync: require$$0$29
   };
 });
 
-var require$$9$2 = index$29 && (typeof index$29 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$29)) === 'object' && 'default' in index$29 ? index$29['default'] : index$29;
+var require$$9$2 = index$30 && (typeof index$30 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$30)) === 'object' && 'default' in index$30 ? index$30['default'] : index$30;
 
 var copy$1 = __commonjs(function (module) {
   var fs = require$$3$3;
   var path = require$$2;
   var ncp = require$$1$16;
-  var mkdir = require$$0$12;
+  var mkdir = require$$0$16;
 
   function copy(src, dest, options, callback) {
     if (typeof options === 'function' && !callback) {
@@ -8691,6 +9701,12 @@ var copy$1 = __commonjs(function (module) {
     }
     callback = callback || function () {};
     options = options || {};
+
+    // don't allow src and dest to be the same
+    var basePath = process.cwd();
+    var currentPath = path.resolve(basePath, src);
+    var targetPath = path.resolve(basePath, dest);
+    if (currentPath === targetPath) return callback(new Error('Source and destination must not be the same.'));
 
     fs.lstat(src, function (err, stats) {
       if (err) return callback(err);
@@ -8717,15 +9733,15 @@ var copy$1 = __commonjs(function (module) {
   module.exports = copy;
 });
 
-var require$$0$26 = copy$1 && (typeof copy$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(copy$1)) === 'object' && 'default' in copy$1 ? copy$1['default'] : copy$1;
+var require$$0$30 = copy$1 && (typeof copy$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(copy$1)) === 'object' && 'default' in copy$1 ? copy$1['default'] : copy$1;
 
-var index$30 = __commonjs(function (module) {
+var index$31 = __commonjs(function (module) {
   module.exports = {
-    copy: require$$0$26
+    copy: require$$0$30
   };
 });
 
-var require$$10$1 = index$30 && (typeof index$30 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$30)) === 'object' && 'default' in index$30 ? index$30['default'] : index$30;
+var require$$10$1 = index$31 && (typeof index$31 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$31)) === 'object' && 'default' in index$31 ? index$31['default'] : index$31;
 
 var assign$1 = __commonjs(function (module) {
   // simple mutable assign
@@ -8748,7 +9764,7 @@ var assign$1 = __commonjs(function (module) {
 
 var require$$12$1 = assign$1 && (typeof assign$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(assign$1)) === 'object' && 'default' in assign$1 ? assign$1['default'] : assign$1;
 
-var index$14 = __commonjs(function (module) {
+var index$15 = __commonjs(function (module) {
   var assign = require$$12$1;
 
   var fse = {};
@@ -8763,15 +9779,15 @@ var index$14 = __commonjs(function (module) {
 
   assign(fs, require$$10$1);
   assign(fs, require$$9$2);
-  assign(fs, require$$0$12);
   assign(fs, require$$0$16);
+  assign(fs, require$$0$20);
   assign(fs, require$$6$2);
   assign(fs, require$$5$3);
   assign(fs, require$$4$5);
   assign(fs, require$$3$5);
   assign(fs, require$$2$4);
   assign(fs, require$$1$8);
-  assign(fs, require$$0$9);
+  assign(fs, require$$0$13);
 
   module.exports = fs;
 
@@ -8789,7 +9805,7 @@ var index$14 = __commonjs(function (module) {
   module.exports.jsonfile = jsonfile; // so users of fs-extra can modify jsonFile.spaces
 });
 
-var fs = index$14 && (typeof index$14 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$14)) === 'object' && 'default' in index$14 ? index$14['default'] : index$14;
+var fs = index$15 && (typeof index$15 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$15)) === 'object' && 'default' in index$15 ? index$15['default'] : index$15;
 
 var Default$4 = {};
 
@@ -8874,1434 +9890,6 @@ var Npm = function (_BaseSourced) {
   }]);
   return Npm;
 }(BaseSourced);
-
-var encode$1 = __commonjs(function (module) {
-  // Copyright Joyent, Inc. and other Node contributors.
-  //
-  // Permission is hereby granted, free of charge, to any person obtaining a
-  // copy of this software and associated documentation files (the
-  // "Software"), to deal in the Software without restriction, including
-  // without limitation the rights to use, copy, modify, merge, publish,
-  // distribute, sublicense, and/or sell copies of the Software, and to permit
-  // persons to whom the Software is furnished to do so, subject to the
-  // following conditions:
-  //
-  // The above copyright notice and this permission notice shall be included
-  // in all copies or substantial portions of the Software.
-  //
-  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-  // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-  'use strict';
-
-  var stringifyPrimitive = function stringifyPrimitive(v) {
-    switch (typeof v === 'undefined' ? 'undefined' : babelHelpers.typeof(v)) {
-      case 'string':
-        return v;
-
-      case 'boolean':
-        return v ? 'true' : 'false';
-
-      case 'number':
-        return isFinite(v) ? v : '';
-
-      default:
-        return '';
-    }
-  };
-
-  module.exports = function (obj, sep, eq, name) {
-    sep = sep || '&';
-    eq = eq || '=';
-    if (obj === null) {
-      obj = undefined;
-    }
-
-    if ((typeof obj === 'undefined' ? 'undefined' : babelHelpers.typeof(obj)) === 'object') {
-      return Object.keys(obj).map(function (k) {
-        var ks = encodeURIComponent(stringifyPrimitive(k)) + eq;
-        if (Array.isArray(obj[k])) {
-          return obj[k].map(function (v) {
-            return ks + encodeURIComponent(stringifyPrimitive(v));
-          }).join(sep);
-        } else {
-          return ks + encodeURIComponent(stringifyPrimitive(obj[k]));
-        }
-      }).join(sep);
-    }
-
-    if (!name) return '';
-    return encodeURIComponent(stringifyPrimitive(name)) + eq + encodeURIComponent(stringifyPrimitive(obj));
-  };
-});
-
-var require$$0$28 = encode$1 && (typeof encode$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(encode$1)) === 'object' && 'default' in encode$1 ? encode$1['default'] : encode$1;
-
-var decode$1 = __commonjs(function (module) {
-  // Copyright Joyent, Inc. and other Node contributors.
-  //
-  // Permission is hereby granted, free of charge, to any person obtaining a
-  // copy of this software and associated documentation files (the
-  // "Software"), to deal in the Software without restriction, including
-  // without limitation the rights to use, copy, modify, merge, publish,
-  // distribute, sublicense, and/or sell copies of the Software, and to permit
-  // persons to whom the Software is furnished to do so, subject to the
-  // following conditions:
-  //
-  // The above copyright notice and this permission notice shall be included
-  // in all copies or substantial portions of the Software.
-  //
-  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-  // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-  'use strict';
-
-  // If obj.hasOwnProperty has been overridden, then calling
-  // obj.hasOwnProperty(prop) will break.
-  // See: https://github.com/joyent/node/issues/1707
-
-  function hasOwnProperty(obj, prop) {
-    return Object.prototype.hasOwnProperty.call(obj, prop);
-  }
-
-  module.exports = function (qs, sep, eq, options) {
-    sep = sep || '&';
-    eq = eq || '=';
-    var obj = {};
-
-    if (typeof qs !== 'string' || qs.length === 0) {
-      return obj;
-    }
-
-    var regexp = /\+/g;
-    qs = qs.split(sep);
-
-    var maxKeys = 1000;
-    if (options && typeof options.maxKeys === 'number') {
-      maxKeys = options.maxKeys;
-    }
-
-    var len = qs.length;
-    // maxKeys <= 0 means that we should not limit keys count
-    if (maxKeys > 0 && len > maxKeys) {
-      len = maxKeys;
-    }
-
-    for (var i = 0; i < len; ++i) {
-      var x = qs[i].replace(regexp, '%20'),
-          idx = x.indexOf(eq),
-          kstr,
-          vstr,
-          k,
-          v;
-
-      if (idx >= 0) {
-        kstr = x.substr(0, idx);
-        vstr = x.substr(idx + 1);
-      } else {
-        kstr = x;
-        vstr = '';
-      }
-
-      k = decodeURIComponent(kstr);
-      v = decodeURIComponent(vstr);
-
-      if (!hasOwnProperty(obj, k)) {
-        obj[k] = v;
-      } else if (Array.isArray(obj[k])) {
-        obj[k].push(v);
-      } else {
-        obj[k] = [obj[k], v];
-      }
-    }
-
-    return obj;
-  };
-});
-
-var require$$1$20 = decode$1 && (typeof decode$1 === 'undefined' ? 'undefined' : babelHelpers.typeof(decode$1)) === 'object' && 'default' in decode$1 ? decode$1['default'] : decode$1;
-
-var index$31 = __commonjs(function (module, exports) {
-  'use strict';
-
-  exports.decode = exports.parse = require$$1$20;
-  exports.encode = exports.stringify = require$$0$28;
-});
-
-var require$$0$27 = index$31 && (typeof index$31 === 'undefined' ? 'undefined' : babelHelpers.typeof(index$31)) === 'object' && 'default' in index$31 ? index$31['default'] : index$31;
-
-var util = __commonjs(function (module) {
-  'use strict';
-
-  module.exports = {
-    isString: function isString(arg) {
-      return typeof arg === 'string';
-    },
-    isObject: function isObject(arg) {
-      return (typeof arg === 'undefined' ? 'undefined' : babelHelpers.typeof(arg)) === 'object' && arg !== null;
-    },
-    isNull: function isNull(arg) {
-      return arg === null;
-    },
-    isNullOrUndefined: function isNullOrUndefined(arg) {
-      return arg == null;
-    }
-  };
-});
-
-var require$$1$21 = util && (typeof util === 'undefined' ? 'undefined' : babelHelpers.typeof(util)) === 'object' && 'default' in util ? util['default'] : util;
-
-var punycode = __commonjs(function (module, exports, global) {
-	/*! https://mths.be/punycode v1.3.2 by @mathias */
-	;(function (root) {
-
-		/** Detect free variables */
-		var freeExports = (typeof exports === 'undefined' ? 'undefined' : babelHelpers.typeof(exports)) == 'object' && exports && !exports.nodeType && exports;
-		var freeModule = (typeof module === 'undefined' ? 'undefined' : babelHelpers.typeof(module)) == 'object' && module && !module.nodeType && module;
-		var freeGlobal = (typeof global === 'undefined' ? 'undefined' : babelHelpers.typeof(global)) == 'object' && global;
-		if (freeGlobal.global === freeGlobal || freeGlobal.window === freeGlobal || freeGlobal.self === freeGlobal) {
-			root = freeGlobal;
-		}
-
-		/**
-   * The `punycode` object.
-   * @name punycode
-   * @type Object
-   */
-		var punycode,
-
-
-		/** Highest positive signed 32-bit float value */
-		maxInt = 2147483647,
-		    // aka. 0x7FFFFFFF or 2^31-1
-
-		/** Bootstring parameters */
-		base = 36,
-		    tMin = 1,
-		    tMax = 26,
-		    skew = 38,
-		    damp = 700,
-		    initialBias = 72,
-		    initialN = 128,
-		    // 0x80
-		delimiter = '-',
-		    // '\x2D'
-
-		/** Regular expressions */
-		regexPunycode = /^xn--/,
-		    regexNonASCII = /[^\x20-\x7E]/,
-		    // unprintable ASCII chars + non-ASCII chars
-		regexSeparators = /[\x2E\u3002\uFF0E\uFF61]/g,
-		    // RFC 3490 separators
-
-		/** Error messages */
-		errors = {
-			'overflow': 'Overflow: input needs wider integers to process',
-			'not-basic': 'Illegal input >= 0x80 (not a basic code point)',
-			'invalid-input': 'Invalid input'
-		},
-
-
-		/** Convenience shortcuts */
-		baseMinusTMin = base - tMin,
-		    floor = Math.floor,
-		    stringFromCharCode = String.fromCharCode,
-
-
-		/** Temporary variable */
-		key;
-
-		/*--------------------------------------------------------------------------*/
-
-		/**
-   * A generic error utility function.
-   * @private
-   * @param {String} type The error type.
-   * @returns {Error} Throws a `RangeError` with the applicable error message.
-   */
-		function error(type) {
-			throw RangeError(errors[type]);
-		}
-
-		/**
-   * A generic `Array#map` utility function.
-   * @private
-   * @param {Array} array The array to iterate over.
-   * @param {Function} callback The function that gets called for every array
-   * item.
-   * @returns {Array} A new array of values returned by the callback function.
-   */
-		function map(array, fn) {
-			var length = array.length;
-			var result = [];
-			while (length--) {
-				result[length] = fn(array[length]);
-			}
-			return result;
-		}
-
-		/**
-   * A simple `Array#map`-like wrapper to work with domain name strings or email
-   * addresses.
-   * @private
-   * @param {String} domain The domain name or email address.
-   * @param {Function} callback The function that gets called for every
-   * character.
-   * @returns {Array} A new string of characters returned by the callback
-   * function.
-   */
-		function mapDomain(string, fn) {
-			var parts = string.split('@');
-			var result = '';
-			if (parts.length > 1) {
-				// In email addresses, only the domain name should be punycoded. Leave
-				// the local part (i.e. everything up to `@`) intact.
-				result = parts[0] + '@';
-				string = parts[1];
-			}
-			// Avoid `split(regex)` for IE8 compatibility. See #17.
-			string = string.replace(regexSeparators, '\x2E');
-			var labels = string.split('.');
-			var encoded = map(labels, fn).join('.');
-			return result + encoded;
-		}
-
-		/**
-   * Creates an array containing the numeric code points of each Unicode
-   * character in the string. While JavaScript uses UCS-2 internally,
-   * this function will convert a pair of surrogate halves (each of which
-   * UCS-2 exposes as separate characters) into a single code point,
-   * matching UTF-16.
-   * @see `punycode.ucs2.encode`
-   * @see <https://mathiasbynens.be/notes/javascript-encoding>
-   * @memberOf punycode.ucs2
-   * @name decode
-   * @param {String} string The Unicode input string (UCS-2).
-   * @returns {Array} The new array of code points.
-   */
-		function ucs2decode(string) {
-			var output = [],
-			    counter = 0,
-			    length = string.length,
-			    value,
-			    extra;
-			while (counter < length) {
-				value = string.charCodeAt(counter++);
-				if (value >= 0xD800 && value <= 0xDBFF && counter < length) {
-					// high surrogate, and there is a next character
-					extra = string.charCodeAt(counter++);
-					if ((extra & 0xFC00) == 0xDC00) {
-						// low surrogate
-						output.push(((value & 0x3FF) << 10) + (extra & 0x3FF) + 0x10000);
-					} else {
-						// unmatched surrogate; only append this code unit, in case the next
-						// code unit is the high surrogate of a surrogate pair
-						output.push(value);
-						counter--;
-					}
-				} else {
-					output.push(value);
-				}
-			}
-			return output;
-		}
-
-		/**
-   * Creates a string based on an array of numeric code points.
-   * @see `punycode.ucs2.decode`
-   * @memberOf punycode.ucs2
-   * @name encode
-   * @param {Array} codePoints The array of numeric code points.
-   * @returns {String} The new Unicode string (UCS-2).
-   */
-		function ucs2encode(array) {
-			return map(array, function (value) {
-				var output = '';
-				if (value > 0xFFFF) {
-					value -= 0x10000;
-					output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-					value = 0xDC00 | value & 0x3FF;
-				}
-				output += stringFromCharCode(value);
-				return output;
-			}).join('');
-		}
-
-		/**
-   * Converts a basic code point into a digit/integer.
-   * @see `digitToBasic()`
-   * @private
-   * @param {Number} codePoint The basic numeric code point value.
-   * @returns {Number} The numeric value of a basic code point (for use in
-   * representing integers) in the range `0` to `base - 1`, or `base` if
-   * the code point does not represent a value.
-   */
-		function basicToDigit(codePoint) {
-			if (codePoint - 48 < 10) {
-				return codePoint - 22;
-			}
-			if (codePoint - 65 < 26) {
-				return codePoint - 65;
-			}
-			if (codePoint - 97 < 26) {
-				return codePoint - 97;
-			}
-			return base;
-		}
-
-		/**
-   * Converts a digit/integer into a basic code point.
-   * @see `basicToDigit()`
-   * @private
-   * @param {Number} digit The numeric value of a basic code point.
-   * @returns {Number} The basic code point whose value (when used for
-   * representing integers) is `digit`, which needs to be in the range
-   * `0` to `base - 1`. If `flag` is non-zero, the uppercase form is
-   * used; else, the lowercase form is used. The behavior is undefined
-   * if `flag` is non-zero and `digit` has no uppercase form.
-   */
-		function digitToBasic(digit, flag) {
-			//  0..25 map to ASCII a..z or A..Z
-			// 26..35 map to ASCII 0..9
-			return digit + 22 + 75 * (digit < 26) - ((flag != 0) << 5);
-		}
-
-		/**
-   * Bias adaptation function as per section 3.4 of RFC 3492.
-   * http://tools.ietf.org/html/rfc3492#section-3.4
-   * @private
-   */
-		function adapt(delta, numPoints, firstTime) {
-			var k = 0;
-			delta = firstTime ? floor(delta / damp) : delta >> 1;
-			delta += floor(delta / numPoints);
-			for (; /* no initialization */delta > baseMinusTMin * tMax >> 1; k += base) {
-				delta = floor(delta / baseMinusTMin);
-			}
-			return floor(k + (baseMinusTMin + 1) * delta / (delta + skew));
-		}
-
-		/**
-   * Converts a Punycode string of ASCII-only symbols to a string of Unicode
-   * symbols.
-   * @memberOf punycode
-   * @param {String} input The Punycode string of ASCII-only symbols.
-   * @returns {String} The resulting string of Unicode symbols.
-   */
-		function decode(input) {
-			// Don't use UCS-2
-			var output = [],
-			    inputLength = input.length,
-			    out,
-			    i = 0,
-			    n = initialN,
-			    bias = initialBias,
-			    basic,
-			    j,
-			    index,
-			    oldi,
-			    w,
-			    k,
-			    digit,
-			    t,
-
-			/** Cached calculation results */
-			baseMinusT;
-
-			// Handle the basic code points: let `basic` be the number of input code
-			// points before the last delimiter, or `0` if there is none, then copy
-			// the first basic code points to the output.
-
-			basic = input.lastIndexOf(delimiter);
-			if (basic < 0) {
-				basic = 0;
-			}
-
-			for (j = 0; j < basic; ++j) {
-				// if it's not a basic code point
-				if (input.charCodeAt(j) >= 0x80) {
-					error('not-basic');
-				}
-				output.push(input.charCodeAt(j));
-			}
-
-			// Main decoding loop: start just after the last delimiter if any basic code
-			// points were copied; start at the beginning otherwise.
-
-			for (index = basic > 0 ? basic + 1 : 0; index < inputLength;) /* no final expression */{
-
-				// `index` is the index of the next character to be consumed.
-				// Decode a generalized variable-length integer into `delta`,
-				// which gets added to `i`. The overflow checking is easier
-				// if we increase `i` as we go, then subtract off its starting
-				// value at the end to obtain `delta`.
-				for (oldi = i, w = 1, k = base;; /* no condition */k += base) {
-
-					if (index >= inputLength) {
-						error('invalid-input');
-					}
-
-					digit = basicToDigit(input.charCodeAt(index++));
-
-					if (digit >= base || digit > floor((maxInt - i) / w)) {
-						error('overflow');
-					}
-
-					i += digit * w;
-					t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
-
-					if (digit < t) {
-						break;
-					}
-
-					baseMinusT = base - t;
-					if (w > floor(maxInt / baseMinusT)) {
-						error('overflow');
-					}
-
-					w *= baseMinusT;
-				}
-
-				out = output.length + 1;
-				bias = adapt(i - oldi, out, oldi == 0);
-
-				// `i` was supposed to wrap around from `out` to `0`,
-				// incrementing `n` each time, so we'll fix that now:
-				if (floor(i / out) > maxInt - n) {
-					error('overflow');
-				}
-
-				n += floor(i / out);
-				i %= out;
-
-				// Insert `n` at position `i` of the output
-				output.splice(i++, 0, n);
-			}
-
-			return ucs2encode(output);
-		}
-
-		/**
-   * Converts a string of Unicode symbols (e.g. a domain name label) to a
-   * Punycode string of ASCII-only symbols.
-   * @memberOf punycode
-   * @param {String} input The string of Unicode symbols.
-   * @returns {String} The resulting Punycode string of ASCII-only symbols.
-   */
-		function encode(input) {
-			var n,
-			    delta,
-			    handledCPCount,
-			    basicLength,
-			    bias,
-			    j,
-			    m,
-			    q,
-			    k,
-			    t,
-			    currentValue,
-			    output = [],
-
-			/** `inputLength` will hold the number of code points in `input`. */
-			inputLength,
-
-			/** Cached calculation results */
-			handledCPCountPlusOne,
-			    baseMinusT,
-			    qMinusT;
-
-			// Convert the input in UCS-2 to Unicode
-			input = ucs2decode(input);
-
-			// Cache the length
-			inputLength = input.length;
-
-			// Initialize the state
-			n = initialN;
-			delta = 0;
-			bias = initialBias;
-
-			// Handle the basic code points
-			for (j = 0; j < inputLength; ++j) {
-				currentValue = input[j];
-				if (currentValue < 0x80) {
-					output.push(stringFromCharCode(currentValue));
-				}
-			}
-
-			handledCPCount = basicLength = output.length;
-
-			// `handledCPCount` is the number of code points that have been handled;
-			// `basicLength` is the number of basic code points.
-
-			// Finish the basic string - if it is not empty - with a delimiter
-			if (basicLength) {
-				output.push(delimiter);
-			}
-
-			// Main encoding loop:
-			while (handledCPCount < inputLength) {
-
-				// All non-basic code points < n have been handled already. Find the next
-				// larger one:
-				for (m = maxInt, j = 0; j < inputLength; ++j) {
-					currentValue = input[j];
-					if (currentValue >= n && currentValue < m) {
-						m = currentValue;
-					}
-				}
-
-				// Increase `delta` enough to advance the decoder's <n,i> state to <m,0>,
-				// but guard against overflow
-				handledCPCountPlusOne = handledCPCount + 1;
-				if (m - n > floor((maxInt - delta) / handledCPCountPlusOne)) {
-					error('overflow');
-				}
-
-				delta += (m - n) * handledCPCountPlusOne;
-				n = m;
-
-				for (j = 0; j < inputLength; ++j) {
-					currentValue = input[j];
-
-					if (currentValue < n && ++delta > maxInt) {
-						error('overflow');
-					}
-
-					if (currentValue == n) {
-						// Represent delta as a generalized variable-length integer
-						for (q = delta, k = base;; /* no condition */k += base) {
-							t = k <= bias ? tMin : k >= bias + tMax ? tMax : k - bias;
-							if (q < t) {
-								break;
-							}
-							qMinusT = q - t;
-							baseMinusT = base - t;
-							output.push(stringFromCharCode(digitToBasic(t + qMinusT % baseMinusT, 0)));
-							q = floor(qMinusT / baseMinusT);
-						}
-
-						output.push(stringFromCharCode(digitToBasic(q, 0)));
-						bias = adapt(delta, handledCPCountPlusOne, handledCPCount == basicLength);
-						delta = 0;
-						++handledCPCount;
-					}
-				}
-
-				++delta;
-				++n;
-			}
-			return output.join('');
-		}
-
-		/**
-   * Converts a Punycode string representing a domain name or an email address
-   * to Unicode. Only the Punycoded parts of the input will be converted, i.e.
-   * it doesn't matter if you call it on a string that has already been
-   * converted to Unicode.
-   * @memberOf punycode
-   * @param {String} input The Punycoded domain name or email address to
-   * convert to Unicode.
-   * @returns {String} The Unicode representation of the given Punycode
-   * string.
-   */
-		function toUnicode(input) {
-			return mapDomain(input, function (string) {
-				return regexPunycode.test(string) ? decode(string.slice(4).toLowerCase()) : string;
-			});
-		}
-
-		/**
-   * Converts a Unicode string representing a domain name or an email address to
-   * Punycode. Only the non-ASCII parts of the domain name will be converted,
-   * i.e. it doesn't matter if you call it with a domain that's already in
-   * ASCII.
-   * @memberOf punycode
-   * @param {String} input The domain name or email address to convert, as a
-   * Unicode string.
-   * @returns {String} The Punycode representation of the given domain name or
-   * email address.
-   */
-		function toASCII(input) {
-			return mapDomain(input, function (string) {
-				return regexNonASCII.test(string) ? 'xn--' + encode(string) : string;
-			});
-		}
-
-		/*--------------------------------------------------------------------------*/
-
-		/** Define the public API */
-		punycode = {
-			/**
-    * A string representing the current Punycode.js version number.
-    * @memberOf punycode
-    * @type String
-    */
-			'version': '1.3.2',
-			/**
-    * An object of methods to convert from JavaScript's internal character
-    * representation (UCS-2) to Unicode code points, and back.
-    * @see <https://mathiasbynens.be/notes/javascript-encoding>
-    * @memberOf punycode
-    * @type Object
-    */
-			'ucs2': {
-				'decode': ucs2decode,
-				'encode': ucs2encode
-			},
-			'decode': decode,
-			'encode': encode,
-			'toASCII': toASCII,
-			'toUnicode': toUnicode
-		};
-
-		/** Expose `punycode` */
-		// Some AMD build optimizers, like r.js, check for specific condition patterns
-		// like the following:
-		if (typeof define == 'function' && babelHelpers.typeof(define.amd) == 'object' && define.amd) {
-			define('punycode', function () {
-				return punycode;
-			});
-		} else if (freeExports && freeModule) {
-			if (module.exports == freeExports) {
-				// in Node.js or RingoJS v0.8.0+
-				freeModule.exports = punycode;
-			} else {
-				// in Narwhal or RingoJS v0.7.0-
-				for (key in punycode) {
-					punycode.hasOwnProperty(key) && (freeExports[key] = punycode[key]);
-				}
-			}
-		} else {
-			// in Rhino or a web browser
-			root.punycode = punycode;
-		}
-	})(__commonjs_global);
-});
-
-var require$$2$7 = punycode && (typeof punycode === 'undefined' ? 'undefined' : babelHelpers.typeof(punycode)) === 'object' && 'default' in punycode ? punycode['default'] : punycode;
-
-var url = __commonjs(function (module, exports) {
-  // Copyright Joyent, Inc. and other Node contributors.
-  //
-  // Permission is hereby granted, free of charge, to any person obtaining a
-  // copy of this software and associated documentation files (the
-  // "Software"), to deal in the Software without restriction, including
-  // without limitation the rights to use, copy, modify, merge, publish,
-  // distribute, sublicense, and/or sell copies of the Software, and to permit
-  // persons to whom the Software is furnished to do so, subject to the
-  // following conditions:
-  //
-  // The above copyright notice and this permission notice shall be included
-  // in all copies or substantial portions of the Software.
-  //
-  // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  // OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  // MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-  // NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-  // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-  // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-  // USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-  'use strict';
-
-  var punycode = require$$2$7;
-  var util = require$$1$21;
-
-  exports.parse = urlParse;
-  exports.resolve = urlResolve;
-  exports.resolveObject = urlResolveObject;
-  exports.format = urlFormat;
-
-  exports.Url = Url;
-
-  function Url() {
-    this.protocol = null;
-    this.slashes = null;
-    this.auth = null;
-    this.host = null;
-    this.port = null;
-    this.hostname = null;
-    this.hash = null;
-    this.search = null;
-    this.query = null;
-    this.pathname = null;
-    this.path = null;
-    this.href = null;
-  }
-
-  // Reference: RFC 3986, RFC 1808, RFC 2396
-
-  // define these here so at least they only have to be
-  // compiled once on the first module load.
-  var protocolPattern = /^([a-z0-9.+-]+:)/i,
-      portPattern = /:[0-9]*$/,
-
-
-  // Special case for a simple path URL
-  simplePathPattern = /^(\/\/?(?!\/)[^\?\s]*)(\?[^\s]*)?$/,
-
-
-  // RFC 2396: characters reserved for delimiting URLs.
-  // We actually just auto-escape these.
-  delims = ['<', '>', '"', '`', ' ', '\r', '\n', '\t'],
-
-
-  // RFC 2396: characters not allowed for various reasons.
-  unwise = ['{', '}', '|', '\\', '^', '`'].concat(delims),
-
-
-  // Allowed by RFCs, but cause of XSS attacks.  Always escape these.
-  autoEscape = ['\''].concat(unwise),
-
-  // Characters that are never ever allowed in a hostname.
-  // Note that any invalid chars are also handled, but these
-  // are the ones that are *expected* to be seen, so we fast-path
-  // them.
-  nonHostChars = ['%', '/', '?', ';', '#'].concat(autoEscape),
-      hostEndingChars = ['/', '?', '#'],
-      hostnameMaxLen = 255,
-      hostnamePartPattern = /^[+a-z0-9A-Z_-]{0,63}$/,
-      hostnamePartStart = /^([+a-z0-9A-Z_-]{0,63})(.*)$/,
-
-  // protocols that can allow "unsafe" and "unwise" chars.
-  unsafeProtocol = {
-    'javascript': true,
-    'javascript:': true
-  },
-
-  // protocols that never have a hostname.
-  hostlessProtocol = {
-    'javascript': true,
-    'javascript:': true
-  },
-
-  // protocols that always contain a // bit.
-  slashedProtocol = {
-    'http': true,
-    'https': true,
-    'ftp': true,
-    'gopher': true,
-    'file': true,
-    'http:': true,
-    'https:': true,
-    'ftp:': true,
-    'gopher:': true,
-    'file:': true
-  },
-      querystring = require$$0$27;
-
-  function urlParse(url, parseQueryString, slashesDenoteHost) {
-    if (url && util.isObject(url) && url instanceof Url) return url;
-
-    var u = new Url();
-    u.parse(url, parseQueryString, slashesDenoteHost);
-    return u;
-  }
-
-  Url.prototype.parse = function (url, parseQueryString, slashesDenoteHost) {
-    if (!util.isString(url)) {
-      throw new TypeError("Parameter 'url' must be a string, not " + (typeof url === 'undefined' ? 'undefined' : babelHelpers.typeof(url)));
-    }
-
-    // Copy chrome, IE, opera backslash-handling behavior.
-    // Back slashes before the query string get converted to forward slashes
-    // See: https://code.google.com/p/chromium/issues/detail?id=25916
-    var queryIndex = url.indexOf('?'),
-        splitter = queryIndex !== -1 && queryIndex < url.indexOf('#') ? '?' : '#',
-        uSplit = url.split(splitter),
-        slashRegex = /\\/g;
-    uSplit[0] = uSplit[0].replace(slashRegex, '/');
-    url = uSplit.join(splitter);
-
-    var rest = url;
-
-    // trim before proceeding.
-    // This is to support parse stuff like "  http://foo.com  \n"
-    rest = rest.trim();
-
-    if (!slashesDenoteHost && url.split('#').length === 1) {
-      // Try fast path regexp
-      var simplePath = simplePathPattern.exec(rest);
-      if (simplePath) {
-        this.path = rest;
-        this.href = rest;
-        this.pathname = simplePath[1];
-        if (simplePath[2]) {
-          this.search = simplePath[2];
-          if (parseQueryString) {
-            this.query = querystring.parse(this.search.substr(1));
-          } else {
-            this.query = this.search.substr(1);
-          }
-        } else if (parseQueryString) {
-          this.search = '';
-          this.query = {};
-        }
-        return this;
-      }
-    }
-
-    var proto = protocolPattern.exec(rest);
-    if (proto) {
-      proto = proto[0];
-      var lowerProto = proto.toLowerCase();
-      this.protocol = lowerProto;
-      rest = rest.substr(proto.length);
-    }
-
-    // figure out if it's got a host
-    // user@server is *always* interpreted as a hostname, and url
-    // resolution will treat //foo/bar as host=foo,path=bar because that's
-    // how the browser resolves relative URLs.
-    if (slashesDenoteHost || proto || rest.match(/^\/\/[^@\/]+@[^@\/]+/)) {
-      var slashes = rest.substr(0, 2) === '//';
-      if (slashes && !(proto && hostlessProtocol[proto])) {
-        rest = rest.substr(2);
-        this.slashes = true;
-      }
-    }
-
-    if (!hostlessProtocol[proto] && (slashes || proto && !slashedProtocol[proto])) {
-
-      // there's a hostname.
-      // the first instance of /, ?, ;, or # ends the host.
-      //
-      // If there is an @ in the hostname, then non-host chars *are* allowed
-      // to the left of the last @ sign, unless some host-ending character
-      // comes *before* the @-sign.
-      // URLs are obnoxious.
-      //
-      // ex:
-      // http://a@b@c/ => user:a@b host:c
-      // http://a@b?@c => user:a host:c path:/?@c
-
-      // v0.12 TODO(isaacs): This is not quite how Chrome does things.
-      // Review our test case against browsers more comprehensively.
-
-      // find the first instance of any hostEndingChars
-      var hostEnd = -1;
-      for (var i = 0; i < hostEndingChars.length; i++) {
-        var hec = rest.indexOf(hostEndingChars[i]);
-        if (hec !== -1 && (hostEnd === -1 || hec < hostEnd)) hostEnd = hec;
-      }
-
-      // at this point, either we have an explicit point where the
-      // auth portion cannot go past, or the last @ char is the decider.
-      var auth, atSign;
-      if (hostEnd === -1) {
-        // atSign can be anywhere.
-        atSign = rest.lastIndexOf('@');
-      } else {
-        // atSign must be in auth portion.
-        // http://a@b/c@d => host:b auth:a path:/c@d
-        atSign = rest.lastIndexOf('@', hostEnd);
-      }
-
-      // Now we have a portion which is definitely the auth.
-      // Pull that off.
-      if (atSign !== -1) {
-        auth = rest.slice(0, atSign);
-        rest = rest.slice(atSign + 1);
-        this.auth = decodeURIComponent(auth);
-      }
-
-      // the host is the remaining to the left of the first non-host char
-      hostEnd = -1;
-      for (var i = 0; i < nonHostChars.length; i++) {
-        var hec = rest.indexOf(nonHostChars[i]);
-        if (hec !== -1 && (hostEnd === -1 || hec < hostEnd)) hostEnd = hec;
-      }
-      // if we still have not hit it, then the entire thing is a host.
-      if (hostEnd === -1) hostEnd = rest.length;
-
-      this.host = rest.slice(0, hostEnd);
-      rest = rest.slice(hostEnd);
-
-      // pull out port.
-      this.parseHost();
-
-      // we've indicated that there is a hostname,
-      // so even if it's empty, it has to be present.
-      this.hostname = this.hostname || '';
-
-      // if hostname begins with [ and ends with ]
-      // assume that it's an IPv6 address.
-      var ipv6Hostname = this.hostname[0] === '[' && this.hostname[this.hostname.length - 1] === ']';
-
-      // validate a little.
-      if (!ipv6Hostname) {
-        var hostparts = this.hostname.split(/\./);
-        for (var i = 0, l = hostparts.length; i < l; i++) {
-          var part = hostparts[i];
-          if (!part) continue;
-          if (!part.match(hostnamePartPattern)) {
-            var newpart = '';
-            for (var j = 0, k = part.length; j < k; j++) {
-              if (part.charCodeAt(j) > 127) {
-                // we replace non-ASCII char with a temporary placeholder
-                // we need this to make sure size of hostname is not
-                // broken by replacing non-ASCII by nothing
-                newpart += 'x';
-              } else {
-                newpart += part[j];
-              }
-            }
-            // we test again with ASCII char only
-            if (!newpart.match(hostnamePartPattern)) {
-              var validParts = hostparts.slice(0, i);
-              var notHost = hostparts.slice(i + 1);
-              var bit = part.match(hostnamePartStart);
-              if (bit) {
-                validParts.push(bit[1]);
-                notHost.unshift(bit[2]);
-              }
-              if (notHost.length) {
-                rest = '/' + notHost.join('.') + rest;
-              }
-              this.hostname = validParts.join('.');
-              break;
-            }
-          }
-        }
-      }
-
-      if (this.hostname.length > hostnameMaxLen) {
-        this.hostname = '';
-      } else {
-        // hostnames are always lower case.
-        this.hostname = this.hostname.toLowerCase();
-      }
-
-      if (!ipv6Hostname) {
-        // IDNA Support: Returns a punycoded representation of "domain".
-        // It only converts parts of the domain name that
-        // have non-ASCII characters, i.e. it doesn't matter if
-        // you call it with a domain that already is ASCII-only.
-        this.hostname = punycode.toASCII(this.hostname);
-      }
-
-      var p = this.port ? ':' + this.port : '';
-      var h = this.hostname || '';
-      this.host = h + p;
-      this.href += this.host;
-
-      // strip [ and ] from the hostname
-      // the host field still retains them, though
-      if (ipv6Hostname) {
-        this.hostname = this.hostname.substr(1, this.hostname.length - 2);
-        if (rest[0] !== '/') {
-          rest = '/' + rest;
-        }
-      }
-    }
-
-    // now rest is set to the post-host stuff.
-    // chop off any delim chars.
-    if (!unsafeProtocol[lowerProto]) {
-
-      // First, make 100% sure that any "autoEscape" chars get
-      // escaped, even if encodeURIComponent doesn't think they
-      // need to be.
-      for (var i = 0, l = autoEscape.length; i < l; i++) {
-        var ae = autoEscape[i];
-        if (rest.indexOf(ae) === -1) continue;
-        var esc = encodeURIComponent(ae);
-        if (esc === ae) {
-          esc = escape(ae);
-        }
-        rest = rest.split(ae).join(esc);
-      }
-    }
-
-    // chop off from the tail first.
-    var hash = rest.indexOf('#');
-    if (hash !== -1) {
-      // got a fragment string.
-      this.hash = rest.substr(hash);
-      rest = rest.slice(0, hash);
-    }
-    var qm = rest.indexOf('?');
-    if (qm !== -1) {
-      this.search = rest.substr(qm);
-      this.query = rest.substr(qm + 1);
-      if (parseQueryString) {
-        this.query = querystring.parse(this.query);
-      }
-      rest = rest.slice(0, qm);
-    } else if (parseQueryString) {
-      // no query string, but parseQueryString still requested
-      this.search = '';
-      this.query = {};
-    }
-    if (rest) this.pathname = rest;
-    if (slashedProtocol[lowerProto] && this.hostname && !this.pathname) {
-      this.pathname = '/';
-    }
-
-    //to support http.request
-    if (this.pathname || this.search) {
-      var p = this.pathname || '';
-      var s = this.search || '';
-      this.path = p + s;
-    }
-
-    // finally, reconstruct the href based on what has been validated.
-    this.href = this.format();
-    return this;
-  };
-
-  // format a parsed object into a url string
-  function urlFormat(obj) {
-    // ensure it's an object, and not a string url.
-    // If it's an obj, this is a no-op.
-    // this way, you can call url_format() on strings
-    // to clean up potentially wonky urls.
-    if (util.isString(obj)) obj = urlParse(obj);
-    if (!(obj instanceof Url)) return Url.prototype.format.call(obj);
-    return obj.format();
-  }
-
-  Url.prototype.format = function () {
-    var auth = this.auth || '';
-    if (auth) {
-      auth = encodeURIComponent(auth);
-      auth = auth.replace(/%3A/i, ':');
-      auth += '@';
-    }
-
-    var protocol = this.protocol || '',
-        pathname = this.pathname || '',
-        hash = this.hash || '',
-        host = false,
-        query = '';
-
-    if (this.host) {
-      host = auth + this.host;
-    } else if (this.hostname) {
-      host = auth + (this.hostname.indexOf(':') === -1 ? this.hostname : '[' + this.hostname + ']');
-      if (this.port) {
-        host += ':' + this.port;
-      }
-    }
-
-    if (this.query && util.isObject(this.query) && Object.keys(this.query).length) {
-      query = querystring.stringify(this.query);
-    }
-
-    var search = this.search || query && '?' + query || '';
-
-    if (protocol && protocol.substr(-1) !== ':') protocol += ':';
-
-    // only the slashedProtocols get the //.  Not mailto:, xmpp:, etc.
-    // unless they had them to begin with.
-    if (this.slashes || (!protocol || slashedProtocol[protocol]) && host !== false) {
-      host = '//' + (host || '');
-      if (pathname && pathname.charAt(0) !== '/') pathname = '/' + pathname;
-    } else if (!host) {
-      host = '';
-    }
-
-    if (hash && hash.charAt(0) !== '#') hash = '#' + hash;
-    if (search && search.charAt(0) !== '?') search = '?' + search;
-
-    pathname = pathname.replace(/[?#]/g, function (match) {
-      return encodeURIComponent(match);
-    });
-    search = search.replace('#', '%23');
-
-    return protocol + host + pathname + search + hash;
-  };
-
-  function urlResolve(source, relative) {
-    return urlParse(source, false, true).resolve(relative);
-  }
-
-  Url.prototype.resolve = function (relative) {
-    return this.resolveObject(urlParse(relative, false, true)).format();
-  };
-
-  function urlResolveObject(source, relative) {
-    if (!source) return relative;
-    return urlParse(source, false, true).resolveObject(relative);
-  }
-
-  Url.prototype.resolveObject = function (relative) {
-    if (util.isString(relative)) {
-      var rel = new Url();
-      rel.parse(relative, false, true);
-      relative = rel;
-    }
-
-    var result = new Url();
-    var tkeys = Object.keys(this);
-    for (var tk = 0; tk < tkeys.length; tk++) {
-      var tkey = tkeys[tk];
-      result[tkey] = this[tkey];
-    }
-
-    // hash is always overridden, no matter what.
-    // even href="" will remove it.
-    result.hash = relative.hash;
-
-    // if the relative url is empty, then there's nothing left to do here.
-    if (relative.href === '') {
-      result.href = result.format();
-      return result;
-    }
-
-    // hrefs like //foo/bar always cut to the protocol.
-    if (relative.slashes && !relative.protocol) {
-      // take everything except the protocol from relative
-      var rkeys = Object.keys(relative);
-      for (var rk = 0; rk < rkeys.length; rk++) {
-        var rkey = rkeys[rk];
-        if (rkey !== 'protocol') result[rkey] = relative[rkey];
-      }
-
-      //urlParse appends trailing / to urls like http://www.example.com
-      if (slashedProtocol[result.protocol] && result.hostname && !result.pathname) {
-        result.path = result.pathname = '/';
-      }
-
-      result.href = result.format();
-      return result;
-    }
-
-    if (relative.protocol && relative.protocol !== result.protocol) {
-      // if it's a known url protocol, then changing
-      // the protocol does weird things
-      // first, if it's not file:, then we MUST have a host,
-      // and if there was a path
-      // to begin with, then we MUST have a path.
-      // if it is file:, then the host is dropped,
-      // because that's known to be hostless.
-      // anything else is assumed to be absolute.
-      if (!slashedProtocol[relative.protocol]) {
-        var keys = Object.keys(relative);
-        for (var v = 0; v < keys.length; v++) {
-          var k = keys[v];
-          result[k] = relative[k];
-        }
-        result.href = result.format();
-        return result;
-      }
-
-      result.protocol = relative.protocol;
-      if (!relative.host && !hostlessProtocol[relative.protocol]) {
-        var relPath = (relative.pathname || '').split('/');
-        while (relPath.length && !(relative.host = relPath.shift())) {}
-        if (!relative.host) relative.host = '';
-        if (!relative.hostname) relative.hostname = '';
-        if (relPath[0] !== '') relPath.unshift('');
-        if (relPath.length < 2) relPath.unshift('');
-        result.pathname = relPath.join('/');
-      } else {
-        result.pathname = relative.pathname;
-      }
-      result.search = relative.search;
-      result.query = relative.query;
-      result.host = relative.host || '';
-      result.auth = relative.auth;
-      result.hostname = relative.hostname || relative.host;
-      result.port = relative.port;
-      // to support http.request
-      if (result.pathname || result.search) {
-        var p = result.pathname || '';
-        var s = result.search || '';
-        result.path = p + s;
-      }
-      result.slashes = result.slashes || relative.slashes;
-      result.href = result.format();
-      return result;
-    }
-
-    var isSourceAbs = result.pathname && result.pathname.charAt(0) === '/',
-        isRelAbs = relative.host || relative.pathname && relative.pathname.charAt(0) === '/',
-        mustEndAbs = isRelAbs || isSourceAbs || result.host && relative.pathname,
-        removeAllDots = mustEndAbs,
-        srcPath = result.pathname && result.pathname.split('/') || [],
-        relPath = relative.pathname && relative.pathname.split('/') || [],
-        psychotic = result.protocol && !slashedProtocol[result.protocol];
-
-    // if the url is a non-slashed url, then relative
-    // links like ../.. should be able
-    // to crawl up to the hostname, as well.  This is strange.
-    // result.protocol has already been set by now.
-    // Later on, put the first path part into the host field.
-    if (psychotic) {
-      result.hostname = '';
-      result.port = null;
-      if (result.host) {
-        if (srcPath[0] === '') srcPath[0] = result.host;else srcPath.unshift(result.host);
-      }
-      result.host = '';
-      if (relative.protocol) {
-        relative.hostname = null;
-        relative.port = null;
-        if (relative.host) {
-          if (relPath[0] === '') relPath[0] = relative.host;else relPath.unshift(relative.host);
-        }
-        relative.host = null;
-      }
-      mustEndAbs = mustEndAbs && (relPath[0] === '' || srcPath[0] === '');
-    }
-
-    if (isRelAbs) {
-      // it's absolute.
-      result.host = relative.host || relative.host === '' ? relative.host : result.host;
-      result.hostname = relative.hostname || relative.hostname === '' ? relative.hostname : result.hostname;
-      result.search = relative.search;
-      result.query = relative.query;
-      srcPath = relPath;
-      // fall through to the dot-handling below.
-    } else if (relPath.length) {
-        // it's relative
-        // throw away the existing file, and take the new path instead.
-        if (!srcPath) srcPath = [];
-        srcPath.pop();
-        srcPath = srcPath.concat(relPath);
-        result.search = relative.search;
-        result.query = relative.query;
-      } else if (!util.isNullOrUndefined(relative.search)) {
-        // just pull out the search.
-        // like href='?foo'.
-        // Put this after the other two cases because it simplifies the booleans
-        if (psychotic) {
-          result.hostname = result.host = srcPath.shift();
-          //occationaly the auth can get stuck only in host
-          //this especially happens in cases like
-          //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-          var authInHost = result.host && result.host.indexOf('@') > 0 ? result.host.split('@') : false;
-          if (authInHost) {
-            result.auth = authInHost.shift();
-            result.host = result.hostname = authInHost.shift();
-          }
-        }
-        result.search = relative.search;
-        result.query = relative.query;
-        //to support http.request
-        if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
-          result.path = (result.pathname ? result.pathname : '') + (result.search ? result.search : '');
-        }
-        result.href = result.format();
-        return result;
-      }
-
-    if (!srcPath.length) {
-      // no path at all.  easy.
-      // we've already handled the other stuff above.
-      result.pathname = null;
-      //to support http.request
-      if (result.search) {
-        result.path = '/' + result.search;
-      } else {
-        result.path = null;
-      }
-      result.href = result.format();
-      return result;
-    }
-
-    // if a url ENDs in . or .., then it must get a trailing slash.
-    // however, if it ends in anything else non-slashy,
-    // then it must NOT get a trailing slash.
-    var last = srcPath.slice(-1)[0];
-    var hasTrailingSlash = (result.host || relative.host || srcPath.length > 1) && (last === '.' || last === '..') || last === '';
-
-    // strip single dots, resolve double dots to parent dir
-    // if the path tries to go above the root, `up` ends up > 0
-    var up = 0;
-    for (var i = srcPath.length; i >= 0; i--) {
-      last = srcPath[i];
-      if (last === '.') {
-        srcPath.splice(i, 1);
-      } else if (last === '..') {
-        srcPath.splice(i, 1);
-        up++;
-      } else if (up) {
-        srcPath.splice(i, 1);
-        up--;
-      }
-    }
-
-    // if the path is allowed to go above the root, restore leading ..s
-    if (!mustEndAbs && !removeAllDots) {
-      for (; up--; up) {
-        srcPath.unshift('..');
-      }
-    }
-
-    if (mustEndAbs && srcPath[0] !== '' && (!srcPath[0] || srcPath[0].charAt(0) !== '/')) {
-      srcPath.unshift('');
-    }
-
-    if (hasTrailingSlash && srcPath.join('/').substr(-1) !== '/') {
-      srcPath.push('');
-    }
-
-    var isAbsolute = srcPath[0] === '' || srcPath[0] && srcPath[0].charAt(0) === '/';
-
-    // put the host back
-    if (psychotic) {
-      result.hostname = result.host = isAbsolute ? '' : srcPath.length ? srcPath.shift() : '';
-      //occationaly the auth can get stuck only in host
-      //this especially happens in cases like
-      //url.resolveObject('mailto:local1@domain1', 'local2@domain2')
-      var authInHost = result.host && result.host.indexOf('@') > 0 ? result.host.split('@') : false;
-      if (authInHost) {
-        result.auth = authInHost.shift();
-        result.host = result.hostname = authInHost.shift();
-      }
-    }
-
-    mustEndAbs = mustEndAbs || result.host && srcPath.length;
-
-    if (mustEndAbs && !isAbsolute) {
-      srcPath.unshift('');
-    }
-
-    if (!srcPath.length) {
-      result.pathname = null;
-      result.path = null;
-    } else {
-      result.pathname = srcPath.join('/');
-    }
-
-    //to support request.http
-    if (!util.isNull(result.pathname) || !util.isNull(result.search)) {
-      result.path = (result.pathname ? result.pathname : '') + (result.search ? result.search : '');
-    }
-    result.auth = relative.auth || result.auth;
-    result.slashes = result.slashes || relative.slashes;
-    result.href = result.format();
-    return result;
-  };
-
-  Url.prototype.parseHost = function () {
-    var host = this.host;
-    var port = portPattern.exec(host);
-    if (port) {
-      port = port[0];
-      if (port !== ':') {
-        this.port = port.substr(1);
-      }
-      host = host.substr(0, host.length - port.length);
-    }
-    if (host) this.hostname = host;
-  };
-});
-
-var url$1 = url && (typeof url === 'undefined' ? 'undefined' : babelHelpers.typeof(url)) === 'object' && 'default' in url ? url['default'] : url;
 
 var semver = __commonjs(function (module, exports) {
   exports = module.exports = SemVer;
@@ -11355,7 +10943,7 @@ var Default = {
   },
   tag: {
     name: undefined, // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
-    existsFailure: false // if tag already exists, fail the executions
+    existsFailure: true // if tag already exists, fail the execution
   },
   push: true, // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
   disableRelativeAutoPush: false, // when testing, we may have nothing to push to.  By default, if using a remote repo that is relative, will try to push using the config.branch using the sourceGit all the way to the server.
@@ -11398,9 +10986,9 @@ var BuildControl = function (_BaseSourced) {
     config)));
 
     if (_this.config.remote.login && _this.config.remote.token) {
-      var remote = url$1.parse(_this.config.remote.repo);
+      var remote = url.parse(_this.config.remote.repo);
 
-      _this.config.remote.repo = url$1.format({
+      _this.config.remote.repo = url.format({
         protocol: remote.protocol,
         auth: _this.config.remote.login + ':' + _this.config.remote.token,
         host: remote.host,
@@ -11496,14 +11084,14 @@ var BuildControl = function (_BaseSourced) {
       if (this.config.fetch.shallow && semver$1.lt(version, '1.9.0')) {
         this.notifyError('Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ' + version + '.');
       }
-
-      // trigger message if tag exists in remote.
-      this.tagName();
     }
   }, {
     key: 'prepublishBuildCheck',
     value: function prepublishBuildCheck() {
       this.prepublishCheck();
+
+      // trigger message if tag exists in remote.
+      this.tagName();
 
       // Check that build directory contains files
       if (fs.readdirSync(this.config.cwd).length === 0) {
@@ -11919,4 +11507,5 @@ var BuildControl = function (_BaseSourced) {
 
 exports.BuildControl = BuildControl;
 exports.Git = Git;
+exports.Npm = Npm;
 //# sourceMappingURL=build-control.cjs.js.map

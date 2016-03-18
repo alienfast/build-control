@@ -437,7 +437,7 @@ const Default = {
   },
   tag: {
     name: undefined,   // fn or string.  Default will autoresolve from the package.json version if possible.  Pass false to avoid tagging.
-    existsFailure: false // if tag already exists, fail the executions
+    existsFailure: true // if tag already exists, fail the execution
   },
   push: true,        // Pushes `branch` to remote. If tag is set, pushes the specified tag as well. false will disable
   disableRelativeAutoPush: false, // when testing, we may have nothing to push to.  By default, if using a remote repo that is relative, will try to push using the config.branch using the sourceGit all the way to the server.
@@ -564,14 +564,13 @@ const BuildControl = class extends BaseSourced {
     if (this.config.fetch.shallow && semver.lt(version, '1.9.0')) {
       this.notifyError(`Option "fetch.shallow" is supported on Git >= 1.9.0 and your version is ${version}.`)
     }
-
-    // trigger message if tag exists in remote.
-    this.tagName()
   }
-
 
   prepublishBuildCheck() {
     this.prepublishCheck()
+
+    // trigger message if tag exists in remote.
+    this.tagName()
 
     // Check that build directory contains files
     if (fs$1.readdirSync(this.config.cwd).length === 0) {
@@ -942,5 +941,5 @@ const BuildControl = class extends BaseSourced {
   }
 }
 
-export { BuildControl, Git };
+export { BuildControl, Git, Npm };
 //# sourceMappingURL=build-control.es.js.map
