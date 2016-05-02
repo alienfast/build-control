@@ -4,11 +4,12 @@
 
 Build control using git exposed as ES2015 modules
 
+## Install
+
+`npm install --save-dev build-control`
+
+
 ## Usage
-
-1. Install
-
-    `npm install --save-dev build-control`
 
 1. Direct use
 
