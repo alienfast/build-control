@@ -1,7 +1,6 @@
 import BaseSourced from './baseSourced'
 import Git from './git'
 import Npm from './npm'
-import extend from 'extend'
 import fs from 'fs-extra'
 import path from 'path'
 import url from 'url'
@@ -53,12 +52,11 @@ const Default = {
 
 const BuildControl = class extends BaseSourced {
 
-  constructor(config = {}) {
-    super(extend(true, {},
-      Default,
+  constructor(...configs) {
+    super(Default,
       {tag: {name: () => this.autoResolveTagName()}}, // tag package version auto resolver
-      config
-    ))
+      ...configs
+    )
 
     // modify
 

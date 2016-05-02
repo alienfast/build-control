@@ -16,8 +16,8 @@ const Base = class {
    *
    * @param config - customized overrides
    */
-  constructor(config) {
-    this.config = extend(true, {}, Default, config)
+  constructor(...configs) {
+    this.config = extend(true, {}, Default, ...configs)
 
     this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
