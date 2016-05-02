@@ -80,10 +80,14 @@ var Base = function () {
    * @param config - customized overrides
    */
 
-  function Base(config) {
+  function Base() {
     babelHelpers.classCallCheck(this, Base);
 
-    this.config = extend(true, {}, Default$2, config);
+    for (var _len = arguments.length, configs = Array(_len), _key = 0; _key < _len; _key++) {
+      configs[_key] = arguments[_key];
+    }
+
+    this.config = extend.apply(undefined, [true, {}, Default$2].concat(configs));
 
     this.debug('[' + this.constructor.name + '] using resolved config: ' + stringify(this.config));
   }
@@ -266,8 +270,9 @@ var Paths = function () {
   return Paths;
 }();
 
+// NOTE: shelljs.pwd() appears to be returning an object that is a string, but enhanced.  We _just_ want the string so it doesn't cause problems downstream.
 var Default$1 = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
+  sourceCwd: '' + shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
   cwd: 'dist' // The directory that contains your built code.
 };
 
@@ -275,15 +280,19 @@ var BaseSourced = function (_Base) {
   babelHelpers.inherits(BaseSourced, _Base);
 
   function BaseSourced() {
-    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    var _Object$getPrototypeO;
+
     babelHelpers.classCallCheck(this, BaseSourced);
 
+    for (var _len = arguments.length, configs = Array(_len), _key = 0; _key < _len; _key++) {
+      configs[_key] = arguments[_key];
+    }
 
     // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
 
-    var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(BaseSourced).call(this, extend(true, {}, Default$1, config)));
+    var _this = babelHelpers.possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(BaseSourced)).call.apply(_Object$getPrototypeO, [this, Default$1].concat(configs)));
 
-    _this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), _this.config.sourceCwd);
+    _this.config.sourceCwd = Paths.resolveCwd('' + shelljs.pwd(), _this.config.sourceCwd);
 
     // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
     _this.config.cwd = Paths.resolveCwd(_this.config.sourceCwd, _this.config.cwd);
@@ -641,18 +650,21 @@ var BuildControl = function (_BaseSourced) {
   babelHelpers.inherits(BuildControl, _BaseSourced);
 
   function BuildControl() {
-    var config = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+    var _Object$getPrototypeO;
+
     babelHelpers.classCallCheck(this, BuildControl);
 
+    for (var _len = arguments.length, configs = Array(_len), _key = 0; _key < _len; _key++) {
+      configs[_key] = arguments[_key];
+    }
 
     // modify
 
     // Build remote repo if sensitive information is passed in
 
-    var _this = babelHelpers.possibleConstructorReturn(this, Object.getPrototypeOf(BuildControl).call(this, extend(true, {}, Default, { tag: { name: function name() {
+    var _this = babelHelpers.possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(BuildControl)).call.apply(_Object$getPrototypeO, [this, Default, { tag: { name: function name() {
           return _this.autoResolveTagName();
-        } } }, // tag package version auto resolver
-    config)));
+        } } }].concat(configs)));
 
     if (_this.config.remote.login && _this.config.remote.token) {
       _this.log('Configuring remote with login and token...');

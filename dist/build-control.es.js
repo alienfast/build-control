@@ -23,8 +23,8 @@ const Base = class {
    *
    * @param config - customized overrides
    */
-  constructor(config) {
-    this.config = extend(true, {}, Default$2, config)
+  constructor(...configs) {
+    this.config = extend(true, {}, Default$2, ...configs)
 
     this.debug(`[${this.constructor.name}] using resolved config: ${stringify(this.config)}`)
   }
@@ -163,18 +163,19 @@ const Paths = class {
   }
 }
 
+// NOTE: shelljs.pwd() appears to be returning an object that is a string, but enhanced.  We _just_ want the string so it doesn't cause problems downstream.
 const Default$1 = {
-  sourceCwd: shelljs.pwd(), // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
+  sourceCwd: `${shelljs.pwd()}`, // The base directory of the source e.g. the directory of the package.json (not usually necessary to specify, but useful for odd structures and tests)
   cwd: 'dist'        // The directory that contains your built code.
 }
 
 const BaseSourced = class extends Base {
 
-  constructor(config = {}) {
-    super(extend(true, {}, Default$1, config))
+  constructor(...configs) {
+    super(Default$1, ...configs)
 
     // get a fully resolved sourceCwd based on the process cwd (if not an absolute path)
-    this.config.sourceCwd = Paths.resolveCwd(shelljs.pwd(), this.config.sourceCwd)
+    this.config.sourceCwd = Paths.resolveCwd(`${shelljs.pwd()}`, this.config.sourceCwd)
 
     // get a fully resolved cwd based on the sourceCwd (if not an absolute path)
     this.config.cwd = Paths.resolveCwd(this.config.sourceCwd, this.config.cwd)
@@ -464,12 +465,11 @@ const Default = {
 
 const BuildControl = class extends BaseSourced {
 
-  constructor(config = {}) {
-    super(extend(true, {},
-      Default,
+  constructor(...configs) {
+    super(Default,
       {tag: {name: () => this.autoResolveTagName()}}, // tag package version auto resolver
-      config
-    ))
+      ...configs
+    )
 
     // modify
 
