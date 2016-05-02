@@ -1,3 +1,5 @@
+[![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url]
+
 # build-control
 
 Build control using git exposed as ES2015 modules
@@ -56,3 +58,9 @@ Please see the [`BuildControl` class](https://github.com/alienfast/build-control
 ## Credits
 
 Most of this code was inspired by [grunt-build-control](https://github.com/robwierzbowski/grunt-build-control). 
+
+
+[npm-url]: https://www.npmjs.com/package/build-control
+[npm-image]: https://img.shields.io/npm/v/build-control.svg
+[travis-url]: https://travis-ci.org/alienfast/build-control
+[travis-image]: https://img.shields.io/travis/alienfast/build-control.svg

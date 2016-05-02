@@ -1,5 +1,5 @@
 import gulp from 'gulp'
-import {Prepublish, PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, Aggregate, series, parallel} from 'gulp-pipeline/src/index'
+import {Prepublish, PublishBuild, Clean, EsLint, Mocha, Preset, RollupEs, RollupCjs, Aggregate, series, parallel} from 'gulp-pipeline'
 
 const preset = Preset.nodeSrc()
 

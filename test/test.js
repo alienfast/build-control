@@ -1,17 +1,13 @@
 import BuildControl from '../src/buildControl'
 import Paths from '../src/paths'
-import chai from 'chai'
-import glob from 'glob'
 import path from 'path'
 import fs from 'fs-extra'
 import childProcess from 'child_process'
-import shelljs from 'shelljs'
-//import _ from 'lodash'
 import Promise from 'bluebird'
 import fancyLog from 'fancy-log'
 import stringify from 'stringify-object'
-import extend from 'extend'
 
+import chai from 'chai'
 let expect = chai.expect
 let debug = false
 
